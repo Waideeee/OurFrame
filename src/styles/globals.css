@@ -1,0 +1,69 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Design tokens — single source of truth shared with tailwind.config.ts.
+   Strict dark mode: the app is always rendered against the cinematic canvas.
+--------------------------------------------------------------------------- */
+:root {
+  --color-background: #131313;
+  --color-canvas: #000000;
+  --color-surface: #181818;
+  --color-surface-container: #201f1f;
+  --color-surface-high: #2a2a2a;
+  --color-primary: #e50914;
+  --color-primary-accent: #ffb4aa;
+  --color-on-surface: #e5e2e1;
+  --color-metadata: #b3b3b3;
+  --color-outline: #af8782;
+  --color-outline-variant: #5e3f3b;
+}
+
+@layer base {
+  * {
+    @apply border-outline-variant;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-on-surface font-sans antialiased;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  ::selection {
+    @apply bg-primary/40 text-on-surface;
+  }
+}
+
+@layer components {
+  /* Page container: max width + 4% horizontal edge padding. */
+  .container-edge {
+    @apply mx-auto w-full max-w-container px-edge;
+  }
+
+  /* Hide scrollbars on horizontally-scrolling rows while keeping them usable. */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

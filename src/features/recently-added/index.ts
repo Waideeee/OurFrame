@@ -1,0 +1,1 @@
+export { RecentlyAddedPage } from './RecentlyAddedPage';
