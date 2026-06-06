@@ -1,5 +1,20 @@
 import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
+
+/**
+ * tailwind-merge configured with OurFrame's custom font-size tokens so it stops
+ * mistaking `text-body-md` (a font size) for a text-color utility — otherwise it
+ * would strip color classes like `text-canvas` that share the `text-` prefix.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      'font-size': [
+        { text: ['display-lg', 'headline-lg', 'headline-mobile', 'title-md', 'body-md', 'label-sm'] },
+      ],
+    },
+  },
+});
 
 /** Merge conditional class names and de-dupe conflicting Tailwind utilities. */
 export function cn(...inputs: ClassValue[]): string {

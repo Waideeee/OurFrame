@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Info, Play, Plus } from 'lucide-react';
+import { Play, Plus } from 'lucide-react';
 import type { Memory } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { Badge, Button } from '@/components/ui';
@@ -11,6 +11,7 @@ interface HeroAction {
   variant?: 'primary' | 'secondary' | 'icon';
   onClick?: () => void;
   ariaLabel?: string;
+  className?: string;
 }
 
 interface HeroBannerProps {
@@ -30,8 +31,18 @@ export function HeroBanner({
 }: HeroBannerProps) {
   const defaultActions: HeroAction[] = [
     { label: 'Play', icon: <Play size={18} className="fill-canvas" />, variant: 'primary' },
-    { label: '+ Collection', icon: <Plus size={18} />, variant: 'secondary' },
-    { label: '', icon: <Info size={20} />, variant: 'icon', ariaLabel: 'More information' },
+    { label: 'Collection', icon: <Plus size={18} />, variant: 'secondary' },
+    {
+      label: '',
+      icon: (
+        <span className="flex h-4 w-4 items-center justify-center font-serif text-sm font-bold leading-none">
+          i
+        </span>
+      ),
+      variant: 'icon',
+      ariaLabel: 'More information',
+      className: 'p-1.5',
+    },
   ];
   const resolvedActions = actions ?? defaultActions;
 
@@ -69,18 +80,22 @@ export function HeroBanner({
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            {resolvedActions.map((action, i) => (
-              <Button
-                key={`${action.label}-${i}`}
-                variant={action.variant ?? 'primary'}
-                size="lg"
-                leadingIcon={action.icon}
-                onClick={action.onClick}
-                aria-label={action.ariaLabel ?? action.label}
-              >
-                {action.label}
-              </Button>
-            ))}
+            {resolvedActions.map((action, i) => {
+              const isIconAction = (action.variant ?? 'primary') === 'icon';
+              return (
+                <Button
+                  key={`${action.label}-${i}`}
+                  variant={action.variant ?? 'primary'}
+                  size="lg"
+                  leadingIcon={isIconAction ? undefined : action.icon}
+                  onClick={action.onClick}
+                  aria-label={action.ariaLabel ?? action.label}
+                  className={action.className}
+                >
+                  {isIconAction ? action.icon : action.label}
+                </Button>
+              );
+            })}
           </div>
         </motion.div>
       </div>

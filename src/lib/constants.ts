@@ -10,7 +10,6 @@ export const NAV_LINKS = [
   { label: 'Photos', path: '/photos' },
   { label: 'Recently Added', path: '/recently-added' },
   { label: 'Our Collection', path: '/collection' },
-  { label: 'Browse by Date', path: '/recently-added' },
 ] as const;
 
 /** Floating "GENRES" filter chips on the home page. */

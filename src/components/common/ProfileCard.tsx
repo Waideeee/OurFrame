@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import type { Profile } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -23,20 +23,35 @@ export function ProfileCard({ profile, onSelect }: ProfileCardProps) {
     >
       <span
         className={cn(
-          'flex h-28 w-28 items-center justify-center overflow-hidden rounded-avatar md:h-36 md:w-36',
-          'border-2 border-transparent transition-colors duration-200',
+          'relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-avatar md:h-36 md:w-36',
+          'border-2 border-transparent transition-all duration-200',
           isAdd
-            ? 'border-dashed border-outline-variant bg-surface text-metadata group-hover:border-outline group-hover:text-on-surface'
+            ? 'border-dashed border-outline-variant bg-surface text-metadata group-hover:border-on-surface group-hover:bg-surface-high group-hover:text-on-surface'
             : 'group-hover:border-on-surface',
         )}
       >
         {isAdd ? (
-          <Plus size={40} />
+          <Plus size={40} className="transition-transform duration-200 group-hover:scale-110" />
         ) : (
-          <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+          <>
+            <img
+              src={profile.avatarUrl}
+              alt=""
+              className="h-full w-full object-cover transition-all duration-200 group-hover:brightness-50"
+            />
+            {/* Manage-mode edit affordance, revealed on hover. */}
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <Pencil size={28} className="text-on-surface" />
+            </span>
+          </>
         )}
       </span>
-      <span className="text-body-md text-metadata transition-colors group-hover:text-on-surface">
+      <span
+        className={cn(
+          'text-body-md text-metadata transition-all duration-200 group-hover:text-on-surface',
+          isAdd && 'group-hover:font-semibold',
+        )}
+      >
         {profile.name}
       </span>
     </motion.button>

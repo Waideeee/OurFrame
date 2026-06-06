@@ -20,7 +20,8 @@ export function SearchBar({
     <div
       className={cn(
         'flex items-center gap-3 rounded-card bg-surface-high px-5',
-        'border border-transparent focus-within:border-outline',
+        'border border-white/10 focus-within:border-white/30',
+        'focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0',
         className,
       )}
     >
@@ -32,7 +33,7 @@ export function SearchBar({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label="Search memories"
-        className="h-14 w-full bg-transparent text-body-md text-on-surface placeholder:text-metadata/70 focus:outline-none"
+        className="h-14 w-full bg-transparent text-body-md text-on-surface placeholder:text-metadata/70 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
     </div>
   );

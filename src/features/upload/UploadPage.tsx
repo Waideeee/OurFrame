@@ -31,7 +31,12 @@ export function UploadPage() {
           <h2 className="text-title-md text-on-surface">Production Details</h2>
 
           <Input label="Memory Title" placeholder="Give it a headline" required />
-          <Input label="Release Date" type="date" required />
+          <Input
+            label="Release Date"
+            type="date"
+            required
+            className="text-on-surface [color-scheme:dark]"
+          />
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="category" className="text-label-sm font-medium text-metadata">

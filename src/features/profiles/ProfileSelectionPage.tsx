@@ -35,7 +35,7 @@ export function ProfileSelectionPage() {
 
         <Button
           variant="icon"
-          className="aspect-auto rounded-card border-metadata px-6 py-2.5 text-label-sm font-semibold uppercase tracking-widest text-metadata hover:text-on-surface"
+          className="aspect-auto rounded-card border-metadata px-6 py-2.5 text-label-sm font-semibold uppercase tracking-widest text-metadata transition-colors duration-200 hover:border-primary hover:bg-primary hover:text-white"
         >
           Manage Profiles
         </Button>

@@ -1,4 +1,4 @@
-import { Info, Play, Plus } from 'lucide-react';
+import { Play, Plus } from 'lucide-react';
 import { getMemory, continueWatching, memoriesByType } from '@/data';
 import { HeroBanner, MediaRow } from '@/components/media';
 
@@ -17,7 +17,17 @@ export function VideosPage() {
         actions={[
           { label: 'Play', icon: <Play size={18} className="fill-canvas" />, variant: 'primary' },
           { label: 'My List', icon: <Plus size={18} />, variant: 'secondary' },
-          { label: '', icon: <Info size={20} />, variant: 'icon', ariaLabel: 'More information' },
+          {
+            label: '',
+            icon: (
+              <span className="flex h-4 w-4 items-center justify-center font-serif text-sm font-bold leading-none">
+                i
+              </span>
+            ),
+            variant: 'icon',
+            ariaLabel: 'More information',
+            className: 'p-1.5',
+          },
         ]}
       />
 
