@@ -1,15 +1,17 @@
 import { Play, Plus } from 'lucide-react';
-import { getMemory, continueWatching, memoriesByType } from '@/data';
+import { useMemories } from '@/app/providers';
 import { HeroBanner, MediaRow } from '@/components/media';
 
 export function VideosPage() {
-  const hero = getMemory('m-santorini')!;
+  const { getMemory, continueWatching, memoriesByType, openMemory } = useMemories();
   const videos = memoriesByType('video');
+  const hero = getMemory('m-santorini') ?? videos[0];
   const travel = videos.filter((m) => m.category === 'Travel');
   const dateNights = videos.filter((m) => m.category === 'Dates' || m.category === 'Daily Life');
 
   return (
     <>
+      {hero ? (
       <HeroBanner
         memory={hero}
         badgeLabel="Featured Memory"
@@ -30,11 +32,17 @@ export function VideosPage() {
           },
         ]}
       />
+      ) : null}
 
       <div className="relative z-10 -mt-16 flex flex-col gap-row-gap pb-20">
-        <MediaRow title="Pick Up Where You Left Off" memories={continueWatching} showProgress />
-        <MediaRow title="Travel Destinations" memories={travel} />
-        <MediaRow title="Date Nights & Dinners" memories={dateNights} />
+        <MediaRow
+          title="Pick Up Where You Left Off"
+          memories={continueWatching}
+          showProgress
+          onSelect={openMemory}
+        />
+        <MediaRow title="Travel Destinations" memories={travel} onSelect={openMemory} />
+        <MediaRow title="Date Nights & Dinners" memories={dateNights} onSelect={openMemory} />
       </div>
     </>
   );

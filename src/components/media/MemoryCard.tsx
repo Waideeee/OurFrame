@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Heart, MapPin, Play } from 'lucide-react';
+import { Heart, MapPin, Play, User } from 'lucide-react';
 import type { Memory } from '@/types';
 import { cn, formatDate, formatDuration } from '@/lib/utils';
 import { Badge } from '@/components/ui';
@@ -92,8 +92,13 @@ export function MemoryCard({ memory, className, showProgress = false, onSelect }
             </span>
           ) : null}
         </div>
-        <div className="mt-1.5">
+        <div className="mt-1.5 flex items-center justify-between gap-2">
           <HeartRating value={memory.hearts} />
+          {memory.uploadedBy ? (
+            <span className="flex items-center gap-1 truncate text-label-sm text-metadata">
+              <User size={11} /> {memory.uploadedBy}
+            </span>
+          ) : null}
         </div>
       </motion.div>
 

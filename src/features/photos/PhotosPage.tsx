@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Heart, Images, Info } from 'lucide-react';
 import type { Mood } from '@/types';
 import { MOOD_FILTERS } from '@/lib/constants';
-import { getMemory, memoriesByType, img } from '@/data';
+import { img } from '@/data';
+import { useMemories } from '@/app/providers';
 import { HeroBanner, MediaRow, FeaturedGrid } from '@/components/media';
 import { CategoryChip } from '@/components/ui';
 
@@ -10,8 +11,9 @@ const ANNIVERSARY_YEARS = ['2023', '2022', '2021', '2020', '2019', '2018'];
 
 export function PhotosPage() {
   const [mood, setMood] = useState<Mood | 'All Captures'>('All Captures');
-  const hero = getMemory('m-amalfi')!;
+  const { getMemory, memoriesByType, openMemory } = useMemories();
   const photos = memoriesByType('photo');
+  const hero = getMemory('m-amalfi') ?? photos[0];
 
   const filtered =
     mood === 'All Captures' ? photos : photos.filter((m) => m.mood === mood);
@@ -19,6 +21,7 @@ export function PhotosPage() {
 
   return (
     <>
+      {hero ? (
       <HeroBanner
         memory={hero}
         actions={[
@@ -27,6 +30,7 @@ export function PhotosPage() {
           { label: '', icon: <Heart size={20} />, variant: 'icon', ariaLabel: 'Love this memory' },
         ]}
       />
+      ) : null}
 
       <div className="relative z-10 -mt-16 flex flex-col gap-row-gap pb-20">
         {/* Filter by mood. */}
@@ -49,9 +53,9 @@ export function PhotosPage() {
           </div>
         </div>
 
-        <MediaRow title="Recent Captures" memories={filtered} />
+        <MediaRow title="Recent Captures" memories={filtered} onSelect={openMemory} />
 
-        <FeaturedGrid title="Summer Vibes" memories={summerVibes} />
+        <FeaturedGrid title="Summer Vibes" memories={summerVibes} onSelect={openMemory} />
 
         {/* Anniversaries — year tiles. */}
         <section className="container-edge">

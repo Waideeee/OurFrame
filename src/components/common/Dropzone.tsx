@@ -6,9 +6,15 @@ interface DropzoneProps {
   /** Called with the user's chosen files (no upload is performed — mock only). */
   onFiles?: (files: File[]) => void;
   accept?: string;
+  /** When false, the parent renders its own previews instead of the file list. */
+  showList?: boolean;
 }
 
-export function Dropzone({ onFiles, accept = 'video/mp4,image/jpeg,image/png' }: DropzoneProps) {
+export function Dropzone({
+  onFiles,
+  accept = 'image/*,video/*',
+  showList = true,
+}: DropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selected, setSelected] = useState<File[]>([]);
@@ -57,7 +63,7 @@ export function Dropzone({ onFiles, accept = 'video/mp4,image/jpeg,image/png' }:
         </p>
       </div>
 
-      {selected.length > 0 ? (
+      {showList && selected.length > 0 ? (
         <ul className="mt-2 w-full max-w-sm space-y-1 text-left">
           {selected.map((file) => (
             <li

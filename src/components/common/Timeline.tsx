@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Heart, MapPin } from 'lucide-react';
+import { Heart, MapPin, User } from 'lucide-react';
 import type { TimelineGroup, Memory } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui';
@@ -51,6 +51,11 @@ function TimelineItem({
           <span className="flex items-center gap-1">
             <Heart size={12} className="fill-primary text-primary" /> {memory.hearts}
           </span>
+          {memory.uploadedBy ? (
+            <span className="flex items-center gap-1">
+              <User size={12} /> {memory.uploadedBy}
+            </span>
+          ) : null}
         </div>
         {large ? (
           <p className="mt-2 line-clamp-2 text-body-md text-metadata">{memory.description}</p>

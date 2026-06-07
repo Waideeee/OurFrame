@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { ProfileProvider } from './providers';
+import { ProfileProvider, MemoryProvider } from './providers';
 
 /** Scrolls back to the top whenever the route changes. */
 function ScrollToTop() {
@@ -14,8 +14,10 @@ function ScrollToTop() {
 export function App() {
   return (
     <ProfileProvider>
-      <ScrollToTop />
-      <Outlet />
+      <MemoryProvider>
+        <ScrollToTop />
+        <Outlet />
+      </MemoryProvider>
     </ProfileProvider>
   );
 }

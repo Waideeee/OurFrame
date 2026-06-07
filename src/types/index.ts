@@ -8,16 +8,46 @@
 
 export type MediaType = 'photo' | 'video' | 'collection';
 
+/**
+ * A single media file attached to a memory. Memories with more than one of
+ * these render an episode-style scroll list in the detail modal.
+ */
+export interface MediaItem {
+  id: string;
+  /** Image/video source, mirrors `Memory.imageUrl` for single-file memories. */
+  url: string;
+  /** Auto-detected from the file extension on upload. */
+  type: 'photo' | 'video';
+  /** Optional per-media caption, editable in the upload form's edit mode. */
+  caption?: string;
+}
+
 export type MemoryCategory =
   | 'Travel'
   | 'Dates'
   | 'Daily Life'
   | 'Holidays'
   | 'Occasions'
-  | 'Anniversaries';
+  | 'Anniversaries'
+  | 'Meetups';
 
-/** Mood tags used by the Photos page "Filter by mood" chip bar. */
-export type Mood = 'Candid' | 'Adventure' | 'Romantic' | 'Dining' | 'Golden Hour';
+/**
+ * Mood tags. The first five power the Photos page "Filter by mood" chip bar;
+ * the rest are selectable on the upload form's Mood dropdown.
+ */
+export type Mood =
+  | 'Candid'
+  | 'Adventure'
+  | 'Romantic'
+  | 'Dining'
+  | 'Golden Hour'
+  | 'Happy'
+  | 'Nostalgic'
+  | 'Funny'
+  | 'Emotional'
+  | 'Adventurous'
+  | 'Peaceful'
+  | 'Lovely';
 
 export interface Memory {
   id: string;
@@ -38,6 +68,16 @@ export interface Memory {
   /** Continue-watching progress, 0–1. Only meaningful for videos. */
   progress?: number;
   featured?: boolean;
+  /** Heart toggle in the detail modal (independent of the 0–5 hearts rating). */
+  liked?: boolean;
+  /** When true the memory is filed in the archive; reversed via the modal. */
+  archived?: boolean;
+  /** "Add to Collection" toggle in the detail modal. */
+  inCollection?: boolean;
+  /** Profile name credited with adding the memory. */
+  uploadedBy?: string;
+  /** Multiple media files attached to a single memory (episode-style list). */
+  mediaItems?: MediaItem[];
 }
 
 export interface Collection {

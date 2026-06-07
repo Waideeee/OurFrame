@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { SEARCH_FILTERS } from '@/lib/constants';
-import { memories } from '@/data';
+import { useMemories } from '@/app/providers';
 import { SearchBar } from '@/components/common';
 import { CategoryChip } from '@/components/ui';
 import { MemoryCard } from '@/components/media';
@@ -10,6 +10,7 @@ type SearchFilter = (typeof SEARCH_FILTERS)[number];
 export function SearchPage() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<SearchFilter>('All Time');
+  const { memories, openMemory } = useMemories();
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -30,7 +31,7 @@ export function SearchPage() {
 
       return matchesQuery && matchesFilter;
     });
-  }, [query, filter]);
+  }, [query, filter, memories]);
 
   return (
     <div className="container-edge pb-24 pt-24">
@@ -52,7 +53,12 @@ export function SearchPage() {
       {results.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {results.map((memory) => (
-            <MemoryCard key={memory.id} memory={memory} className="w-full" />
+            <MemoryCard
+              key={memory.id}
+              memory={memory}
+              className="w-full"
+              onSelect={openMemory}
+            />
           ))}
         </div>
       ) : (

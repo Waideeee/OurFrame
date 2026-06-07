@@ -1,22 +1,21 @@
 import { useState } from 'react';
 import type { MemoryCategory } from '@/types';
 import { GENRE_FILTERS } from '@/lib/constants';
-import {
-  getMemory,
-  memoriesByCategory,
-  recentMemories,
-  memories,
-} from '@/data';
+import { useMemories } from '@/app/providers';
 import { HeroBanner, MediaRow, FeaturedGrid } from '@/components/media';
 import { CategoryChip } from '@/components/ui';
 
 export function HomePage() {
   const [activeGenre, setActiveGenre] = useState<MemoryCategory | null>(null);
+  const { getMemory, memoriesByCategory, recentMemories, memories, openMemory } = useMemories();
 
-  const hero = getMemory('m-sunset')!;
-  const firstDate = [getMemory('m-first-date')!, ...memoriesByCategory('Dates')].filter(
-    (m, i, arr) => arr.findIndex((x) => x.id === m.id) === i,
-  );
+  // Anchor memories may have been deleted, so fall back gracefully.
+  const hero = getMemory('m-sunset') ?? recentMemories[0];
+  const firstDateAnchor = getMemory('m-first-date');
+  const firstDate = [
+    ...(firstDateAnchor ? [firstDateAnchor] : []),
+    ...memoriesByCategory('Dates'),
+  ].filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i);
   const occasions = memoriesByCategory('Occasions');
   const bigTrip = memories.filter((m) =>
     ['m-monthsary-3', 'm-santorini', 'm-amalfi', 'm-roadtrip', 'm-european-summer'].includes(m.id),
@@ -24,16 +23,16 @@ export function HomePage() {
 
   return (
     <>
-      <HeroBanner memory={hero} />
+      {hero ? <HeroBanner memory={hero} /> : null}
 
       <div className="relative z-10 -mt-16 flex flex-col gap-row-gap pb-20">
-        <MediaRow title="First Date" memories={firstDate} />
-        <MediaRow title="1st Monthsary" memories={occasions} />
+        <MediaRow title="First Date" memories={firstDate} onSelect={openMemory} />
+        <MediaRow title="1st Monthsary" memories={occasions} onSelect={openMemory} />
 
-        <FeaturedGrid title="3rd Monthsary — Our Big Trip" memories={bigTrip} />
+        <FeaturedGrid title="3rd Monthsary — Our Big Trip" memories={bigTrip} onSelect={openMemory} />
 
-        <MediaRow title="Occasions" memories={memoriesByCategory('Holidays')} />
-        <MediaRow title="Recently Added" memories={recentMemories} />
+        <MediaRow title="Occasions" memories={memoriesByCategory('Holidays')} onSelect={openMemory} />
+        <MediaRow title="Recently Added" memories={recentMemories} onSelect={openMemory} />
       </div>
 
       {/* Floating GENRES filter bar near the bottom of the viewport. */}

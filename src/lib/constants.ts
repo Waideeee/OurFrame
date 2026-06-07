@@ -10,6 +10,7 @@ export const NAV_LINKS = [
   { label: 'Photos', path: '/photos' },
   { label: 'Recently Added', path: '/recently-added' },
   { label: 'Our Collection', path: '/collection' },
+  { label: 'My Lists', path: '/my-lists' },
 ] as const;
 
 /** Floating "GENRES" filter chips on the home page. */
@@ -27,6 +28,17 @@ export const SEARCH_FILTERS = [
   'Date Nights',
   'Anniversaries',
 ] as const;
+
+/** Mood options offered by the upload form's "Mood" dropdown. */
+export const UPLOAD_MOODS: Mood[] = [
+  'Happy',
+  'Romantic',
+  'Nostalgic',
+  'Funny',
+  'Emotional',
+  'Adventurous',
+  'Peaceful',
+];
 
 export const UPLOAD_CATEGORIES: MemoryCategory[] = [
   'Travel',

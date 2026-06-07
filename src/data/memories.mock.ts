@@ -53,6 +53,12 @@ export const memories: Memory[] = [
     date: '2021-02-09',
     location: 'Home',
     hearts: 4,
+    mediaItems: [
+      { id: 'm-monthsary-1-1', url: '/lizard.jpg', type: 'photo', caption: 'The little cake we baked together' },
+      { id: 'm-monthsary-1-2', url: '/impostor-cat.jpg', type: 'photo', caption: 'Handwritten cards' },
+      { id: 'm-monthsary-1-3', url: '/lizard.jpg', type: 'video', caption: 'Our first slow dance in the kitchen' },
+      { id: 'm-monthsary-1-4', url: '/impostor-cat.jpg', type: 'photo' },
+    ],
   },
   {
     id: 'm-monthsary-3',
@@ -261,6 +267,16 @@ export const memories: Memory[] = [
     hearts: 1,
   },
 ];
+
+/**
+ * Credit each seed memory to a profile so the UI can show who posted it. Spread
+ * deterministically across the two partners and the shared "Our Story" profile;
+ * memories created through the upload form set their own `uploadedBy`.
+ */
+const SEED_UPLOADERS = ['Partner 1', 'Partner 2', 'Our Story'];
+memories.forEach((m, i) => {
+  if (!m.uploadedBy) m.uploadedBy = SEED_UPLOADERS[i % SEED_UPLOADERS.length];
+});
 
 /** Lookup helpers used across feature pages. */
 export const memoriesById = new Map(memories.map((m) => [m.id, m]));

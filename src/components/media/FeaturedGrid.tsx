@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Heart, MapPin } from 'lucide-react';
+import { Heart, MapPin, User } from 'lucide-react';
 import type { Memory } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui';
@@ -60,6 +60,11 @@ export function FeaturedGrid({ title, memories, onSelect }: FeaturedGridProps) {
                     <Heart size={11} className="fill-primary text-primary" /> {memory.hearts}
                   </span>
                 </div>
+                {memory.uploadedBy ? (
+                  <div className="mt-1 flex items-center gap-1 text-label-sm text-metadata">
+                    <User size={11} /> {memory.uploadedBy}
+                  </div>
+                ) : null}
               </div>
             </motion.button>
           );

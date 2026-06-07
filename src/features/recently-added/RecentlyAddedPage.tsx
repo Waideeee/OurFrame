@@ -1,11 +1,12 @@
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { TimelineGroup } from '@/types';
-import { recentMemories } from '@/data';
+import { useMemories } from '@/app/providers';
 import { Timeline } from '@/components/common';
 
 export function RecentlyAddedPage() {
   const navigate = useNavigate();
+  const { recentMemories, openMemory } = useMemories();
 
   // Bucket the most recent memories into relative-time groups.
   const groups: TimelineGroup[] = [
@@ -24,7 +25,7 @@ export function RecentlyAddedPage() {
         </p>
       </header>
 
-      <Timeline groups={groups} />
+      <Timeline groups={groups} onSelect={openMemory} />
 
       {/* Floating add FAB. */}
       <button

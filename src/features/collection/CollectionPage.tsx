@@ -2,18 +2,15 @@ import { useState } from 'react';
 import { ListPlus, Play } from 'lucide-react';
 import type { MemoryCategory } from '@/types';
 import { GENRE_FILTERS } from '@/lib/constants';
-import {
-  getMemory,
-  collections,
-  collectionTypes,
-  recentMemories,
-} from '@/data';
+import { collections, collectionTypes } from '@/data';
+import { useMemories } from '@/app/providers';
 import { HeroBanner, MediaRow, FeaturedGrid } from '@/components/media';
 import { CategoryChip } from '@/components/ui';
 
 export function CollectionPage() {
   const [filter, setFilter] = useState<MemoryCategory | null>(null);
-  const hero = getMemory('m-european-summer')!;
+  const { getMemory, recentMemories, openMemory } = useMemories();
+  const hero = getMemory('m-european-summer') ?? recentMemories[0];
 
   const highlights = collections
     .filter((c) => (filter ? c.category === filter : true))
@@ -31,6 +28,7 @@ export function CollectionPage() {
 
   return (
     <>
+      {hero ? (
       <HeroBanner
         memory={hero}
         actions={[
@@ -38,6 +36,7 @@ export function CollectionPage() {
           { label: 'Add to List', icon: <ListPlus size={18} />, variant: 'secondary' },
         ]}
       />
+      ) : null}
 
       <div className="relative z-10 -mt-16 flex flex-col gap-row-gap pb-20">
         <div className="container-edge flex flex-wrap gap-2">
@@ -83,9 +82,14 @@ export function CollectionPage() {
           </div>
         </section>
 
-        <MediaRow title="Recent Albums" memories={recentMemories.slice(0, 8)} onViewAll={() => {}} />
+        <MediaRow
+          title="Recent Albums"
+          memories={recentMemories.slice(0, 8)}
+          onViewAll={() => {}}
+          onSelect={openMemory}
+        />
 
-        <FeaturedGrid title="Archive Highlights" memories={highlights} />
+        <FeaturedGrid title="Archive Highlights" memories={highlights} onSelect={openMemory} />
       </div>
     </>
   );

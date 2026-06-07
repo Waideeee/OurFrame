@@ -35,6 +35,18 @@ export function formatMonthYear(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 }
 
+/** Video file extensions used to auto-detect uploaded media type. */
+const VIDEO_EXTENSIONS = ['mp4', 'mov', 'webm', 'mkv', 'avi', 'm4v'];
+
+/**
+ * Auto-detect whether a file is a photo or a video from its name/extension.
+ * Defaults to 'photo' when the extension is unknown.
+ */
+export function detectMediaType(fileName: string): 'photo' | 'video' {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+  return VIDEO_EXTENSIONS.includes(ext) ? 'video' : 'photo';
+}
+
 /** 5025 -> "1:23:45", 185 -> "3:05". */
 export function formatDuration(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
