@@ -9,7 +9,6 @@ export const NAV_LINKS = [
   { label: 'Videos', path: '/videos' },
   { label: 'Photos', path: '/photos' },
   { label: 'Recently Added', path: '/recently-added' },
-  { label: 'Our Collection', path: '/collection' },
   { label: 'My Lists', path: '/my-lists' },
 ] as const;
 

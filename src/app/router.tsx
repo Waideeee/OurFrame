@@ -6,7 +6,6 @@ import { ProfileSelectionPage, AddProfilePage, EditProfilePage } from '@/feature
 import { HomePage, EditMemoryPage } from '@/features/memories';
 import { VideosPage } from '@/features/videos';
 import { PhotosPage } from '@/features/photos';
-import { CollectionPage } from '@/features/collection';
 import { MyListsPage } from '@/features/my-lists';
 import { RecentlyAddedPage } from '@/features/recently-added';
 import { SearchPage } from '@/features/search';
@@ -32,7 +31,6 @@ export const router = createBrowserRouter([
           { path: '/videos', element: <VideosPage /> },
           { path: '/photos', element: <PhotosPage /> },
           { path: '/recently-added', element: <RecentlyAddedPage /> },
-          { path: '/collection', element: <CollectionPage /> },
           { path: '/my-lists', element: <MyListsPage /> },
           { path: '/search', element: <SearchPage /> },
           { path: '/upload', element: <UploadPage /> },
