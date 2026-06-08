@@ -102,8 +102,7 @@ export function UploadPage() {
       <header className="container-edge mb-10">
         <h1 className="text-headline-mobile text-on-surface md:text-headline-lg">New Premiere</h1>
         <p className="mt-2 max-w-2xl text-body-md text-metadata">
-          Give your latest memory a proper release — add the media, write the story, and send it to
-          the archive.
+          Give your latest memory a proper release. Upload, write, and post — just like that.
         </p>
       </header>
 

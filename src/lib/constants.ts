@@ -14,10 +14,10 @@ export const NAV_LINKS = [
 ] as const;
 
 /** Floating "GENRES" filter chips on the home page. */
-export const GENRE_FILTERS: MemoryCategory[] = ['Travel', 'Dates', 'Daily Life', 'Holidays'];
+export const GENRE_FILTERS: MemoryCategory[] = ['Travel', 'Dates', 'Daily Life', 'Holidays', 'Occasions', 'Anniversaries'];
 
 /** "Filter by mood" chips on the photos page. */
-export const MOOD_FILTERS: Mood[] = ['Candid', 'Adventure', 'Romantic', 'Dining', 'Golden Hour'];
+export const MOOD_FILTERS: Mood[] = ['Happy', 'Adventure', 'Romantic','Nostalgic','Funny','Emotional','Peaceful' ];
 
 /** Search page time/category filter chips. */
 export const SEARCH_FILTERS = [
