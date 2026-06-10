@@ -3,6 +3,8 @@ import { App } from './App';
 import { PageContainer } from '@/components/layout';
 import { LoginPage, SignUpPage } from '@/features/auth';
 import { ProfileSelectionPage, AddProfilePage, EditProfilePage } from '@/features/profiles';
+import { ProfilePage } from '@/features/profile';
+import { SettingsPage, ChangeEmailPage, ChangePasswordPage } from '@/features/settings';
 import { HomePage, EditMemoryPage } from '@/features/memories';
 import { VideosPage } from '@/features/videos';
 import { PhotosPage } from '@/features/photos';
@@ -27,6 +29,10 @@ export const router = createBrowserRouter([
         element: <PageContainer />,
         children: [
           { path: '/', element: <HomePage /> },
+          { path: '/profile', element: <ProfilePage /> },
+          { path: '/settings', element: <SettingsPage /> },
+          { path: '/settings/email', element: <ChangeEmailPage /> },
+          { path: '/settings/password', element: <ChangePasswordPage /> },
           { path: '/memories/edit/:id', element: <EditMemoryPage /> },
           { path: '/videos', element: <VideosPage /> },
           { path: '/photos', element: <PhotosPage /> },

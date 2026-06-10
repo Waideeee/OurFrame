@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, Search, X } from 'lucide-react';
+import { LogOut, Menu, Search, Settings, User, Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAV_LINKS } from '@/lib/constants';
 import { useScrollPosition } from '@/hooks';
@@ -10,9 +10,49 @@ import { Logo } from './Logo';
 
 export function Navbar() {
   const { isScrolled } = useScrollPosition(24);
-  const { activeProfile } = useProfile();
+  const { activeProfile, clearActiveProfile } = useProfile();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Close the profile dropdown on outside click or Escape.
+  useEffect(() => {
+    if (!profileOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setProfileOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [profileOpen]);
+
+  const goTo = (path: string) => {
+    setProfileOpen(false);
+    navigate(path);
+  };
+
+  const handleSignOut = () => {
+    setProfileOpen(false);
+    // Clear the active profile (the closest thing to "logout" the app has) and
+    // return to the sign-in screen.
+    clearActiveProfile();
+    navigate('/login');
+  };
+
+  const profileMenuItems = [
+    { label: 'Switch Profile', icon: Users, onClick: () => goTo('/profiles') },
+    { label: 'My Profile', icon: User, onClick: () => goTo('/profile') },
+    { label: 'Settings', icon: Settings, onClick: () => goTo('/settings') },
+  ];
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -61,19 +101,93 @@ export function Navbar() {
             <Search size={20} />
           </button>
 
-          <Link
-            to="/profiles"
-            aria-label="Switch profile"
-            className="hidden h-8 w-8 overflow-hidden rounded-avatar border border-white/20 sm:block"
-          >
-            {activeProfile ? (
-              <img src={activeProfile.avatarUrl} alt={activeProfile.name} className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center bg-surface-high text-label-sm">
-                ?
-              </span>
-            )}
-          </Link>
+          <div ref={profileRef} className="relative hidden sm:block">
+            <button
+              type="button"
+              aria-label="Profile menu"
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+              onClick={() => setProfileOpen((v) => !v)}
+              className={cn(
+                'h-8 w-8 overflow-hidden rounded-avatar border transition-colors',
+                profileOpen ? 'border-white/60' : 'border-white/20 hover:border-white/50',
+              )}
+            >
+              {activeProfile ? (
+                <img src={activeProfile.avatarUrl} alt={activeProfile.name} className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center bg-surface-high text-label-sm">
+                  ?
+                </span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {profileOpen ? (
+                <motion.div
+                  role="menu"
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="absolute right-0 top-full z-50 mt-3 w-60 origin-top-right rounded-card border border-white/10 bg-[#141414] py-2 shadow-card-hover"
+                >
+                  {/* Upward caret pointing at the avatar. */}
+                  <span className="absolute -top-1.5 right-3 h-3 w-3 rotate-45 border-l border-t border-white/10 bg-[#141414]" />
+
+                  {/* Current-profile header. */}
+                  <div className="flex items-center gap-3 border-b border-white/10 px-4 pb-3">
+                    <span className="h-9 w-9 shrink-0 overflow-hidden rounded-avatar border border-white/20">
+                      {activeProfile ? (
+                        <img
+                          src={activeProfile.avatarUrl}
+                          alt={activeProfile.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center bg-surface-high text-label-sm">
+                          ?
+                        </span>
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-body-md text-on-surface">
+                        {activeProfile?.name ?? 'No profile'}
+                      </span>
+                      <span className="block text-label-sm text-metadata">Current profile</span>
+                    </span>
+                  </div>
+
+                  <div className="pt-1">
+                    {profileMenuItems.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        role="menuitem"
+                        onClick={item.onClick}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-body-md text-metadata transition-colors hover:bg-white/10 hover:text-on-surface"
+                      >
+                        <item.icon size={18} className="shrink-0" />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-1 border-t border-white/10 pt-1">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-body-md text-metadata transition-colors hover:bg-white/10 hover:text-on-surface"
+                    >
+                      <LogOut size={18} className="shrink-0" />
+                      Sign Out
+                    </button>
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
 
           <button
             type="button"

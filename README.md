@@ -5,6 +5,30 @@ photos, videos, and collections — as if each one were a featured release.
 
 ---
 
+## Recent updates — 2026-06-10
+
+- **Navbar profile menu** — the top-right avatar now opens a Netflix-style dropdown
+  (current-profile header + Switch Profile / My Profile / Settings / Sign Out), with a
+  caret, outside-click + `Esc` to close, and a fade animation.
+- **My Profile page (`/profile`)** — view/edit the active profile's name & avatar,
+  read-only **stats** (memories uploaded, photos, videos, member-since), and a
+  **Delete Profile** danger zone.
+- **Settings (`/settings`)** — a full two-column settings screen with seven sections
+  (Account, Profiles, Privacy, Notifications, Appearance, Storage & Media, About).
+  Every toggle/pill **persists to `localStorage`**.
+- **Change Email (`/settings/email`) & Change Password (`/settings/password`)** — dedicated
+  validated forms reached from Account → Change; the new email / "last changed" date are
+  reflected back on the Account section.
+- **Working theme switcher** — **Dark / Light / System** flips the whole app at runtime
+  via CSS-variable design tokens and a `data-theme` attribute (System follows the OS).
+- **Privacy Policy & Terms of Use** — detailed, multi-section legal content in the
+  About → Legal modals.
+
+> No new runtime packages were introduced — everything above is built on the existing
+> stack (see **Tech stack** below).
+
+---
+
 ## Getting started
 
 ```bash
@@ -30,18 +54,23 @@ driven by the mock data in `src/data`.
 ## Tech stack
 
 - **React 18 + Vite** (TypeScript, strict mode)
-- **React Router v6** (`createBrowserRouter`) — routing + the new profile/memory edit routes
-- **Tailwind CSS** configured with the design tokens below
-- **Framer Motion** — hover / scale / transition animation and the detail-modal
+- **React Router v6** (`createBrowserRouter`) — routing + the profile/memory edit and
+  settings routes
+- **Tailwind CSS** configured with the design tokens below. Tokens are **channel-based
+  CSS variables** (`rgb(var(--color-*) / <alpha-value>)`), so a single `data-theme`
+  attribute swaps the dark/light palette while keeping Tailwind's alpha modifiers
+- **Framer Motion** — hover / scale / transition animation, the detail-modal
   enter/exit (`AnimatePresence`, including `onExitComplete` so a delete doesn't orphan
-  the closing overlay)
+  the closing overlay), and the navbar / modal fades
 - **lucide-react** icons, **Inter** via `@fontsource/inter`
-- Utilities: **clsx** + **tailwind-merge** (`cn`)
+- Utilities: **clsx** + **tailwind-merge** (`cn`); theming helper in `src/lib/theme.ts`
+- **`localStorage`** persistence for settings + account login details (no backend)
 
-> **Dependencies:** every feature added (upload fields & multi-media, profile and
-> memory add/edit/delete, the detail modal, episode list, My Lists, and the
-> "uploaded by" credit) is built entirely on the libraries above — **no new runtime
-> packages were introduced.** Run `npm install` to pull the versions pinned in
+> **Dependencies:** every feature added — upload fields & multi-media, profile and
+> memory add/edit/delete, the detail modal, episode list, My Lists, the "uploaded by"
+> credit, and the latest navbar menu / My Profile / Settings / theme switcher / change
+> email & password work — is built entirely on the libraries above. **No new runtime
+> packages have been introduced.** Run `npm install` to pull the versions pinned in
 > `package.json` / `package-lock.json`.
 
 ---
@@ -61,12 +90,12 @@ src/
 │   ├── media/           # MemoryCard, MediaRow, HeroBanner, FeaturedGrid,
 │   │                    #   MemoryDetailModal (Netflix-style overlay)
 │   └── common/          # Timeline, ProfileCard, SearchBar, Dropzone
-├── features/            # one folder per page (auth, profiles, memories,
-│                        #   videos, photos, collection, my-lists,
+├── features/            # one folder per page (auth, profiles, profile,
+│                        #   settings, memories, videos, photos, my-lists,
 │                        #   recently-added, search, upload) — barrel-exported
 ├── data/                # *.mock.ts — single source of truth, API-shaped
 ├── hooks/               # useScrollPosition, useMediaQuery
-├── lib/                 # constants.ts, utils.ts (cn, formatters)
+├── lib/                 # constants.ts, utils.ts (cn, formatters), theme.ts (Dark/Light/System)
 ├── types/               # Memory, Collection, Profile, MediaType, …
 └── styles/globals.css   # Tailwind directives + CSS variable tokens
 ```
@@ -85,6 +114,10 @@ real API can be dropped in later without touching component code.
 | `/profiles`          | "Who's watching?" profile selection + Manage mode |
 | `/profiles/new`      | Add Profile (name + avatar upload)                |
 | `/profiles/edit/:id` | Edit Profile (rename, change avatar, delete)      |
+| `/profile`           | My Profile (active profile's info, stats, delete)  |
+| `/settings`          | Settings (Account, Profiles, Privacy, … About)    |
+| `/settings/email`    | Change Email (validated, persists to localStorage) |
+| `/settings/password` | Change Password (validated)                       |
 | `/`                  | Home — **Memories** (hero + rows + featured grid) |
 | `/videos`            | Videos (continue-watching + rows)                 |
 | `/photos`            | Photos (filter by mood + anniversaries grid)      |
@@ -112,8 +145,10 @@ layer, so a real API can be swapped in later without touching components:
   `deleteMemory`, `toggleArchive`, `toggleLike`, `toggleCollection`) plus the
   shared detail-modal controls (`openMemory` / `closeMemory`).
 
-> **Note:** state is in-memory only (no persistence) — uploads, edits, deletes,
-> likes, and archive changes reset on a full page reload, by design for the mock.
+> **Note:** memory & profile state is in-memory only — uploads, edits, deletes, likes,
+> and archive changes reset on a full page reload, by design for the mock. **Settings
+> preferences and account login details (email / password-changed marker) do persist**
+> via `localStorage`, so the theme and toggles survive a refresh.
 
 ### Create / upload a memory (`/upload`)
 
@@ -169,6 +204,58 @@ the featured grid, the recently-added timeline, and the detail modal.
 - **My Lists** (`/my-lists`) gathers everything you've saved in one place: **My List**
   (added to collection), **Loved** (hearted), **Archived**, and **All Collections** —
   each with an empty-state hint.
+
+### Navbar profile menu
+
+The top-right avatar opens a Netflix-style dropdown: a **current-profile header**
+(avatar + name) over **Switch Profile** (`/profiles`), **My Profile** (`/profile`),
+**Settings** (`/settings`), and **Sign Out**. It has an upward caret, a fade
+in/out animation, and closes on outside-click or `Esc`.
+
+### My Profile (`/profile`)
+
+The active profile's own page — change the **name** (inline edit) and **avatar**
+(same upload behaviour as Add/Edit Profile), see read-only **stats** (memories
+uploaded, photos, videos, and a member-since derived from the earliest memory), and a
+**Delete Profile** danger zone.
+
+### Settings (`/settings`)
+
+A two-column settings screen (fixed sidebar + scrollable content) with seven sections:
+
+- **Account** — profile card, change **display name / email / password**, a read-only
+  **partner** row, and a **Delete my account** danger zone (with a confirm dialog).
+- **Profiles** — every profile listed with an **Owner / Partner / Shared** role badge,
+  plus PIN-on-switch and share-with-partner toggles.
+- **Privacy** — visibility toggles and an **Export our memories** button that downloads
+  all memory data as JSON.
+- **Notifications** — in-app and email alert toggles.
+- **Appearance** — **Dark / Light / System** theme, homepage toggles, and language.
+- **Storage & Media** — usage bar (derived from media counts), upload quality, archive
+  shortcut, and a **Clear cached files** action (clears only `ourframe:cache:*` keys).
+- **About** — version, memory count, frame-started date, and the **Legal** modals.
+
+Every toggle/pill writes through to `localStorage` (`ourframe:settings`), and the
+**Sign out** button at the bottom of the sidebar runs the existing logout logic.
+
+### Change email & password
+
+- **Change Email** (`/settings/email`) — current email, new + confirm, and a current-password
+  confirmation, with validation; saves the new address to `localStorage`.
+- **Change Password** (`/settings/password`) — current / new / confirm with validation
+  (length, match, must differ); stamps a "last changed" date shown back on Account.
+
+### Theme (Dark / Light / System)
+
+Picking a theme in **Appearance** applies it app-wide instantly and remembers it. It
+sets `data-theme` on `<html>`, which flips the channel-based CSS-variable palette in
+`globals.css`; **System** tracks the OS via `matchMedia` and updates live. The helper
+lives in [`src/lib/theme.ts`](src/lib/theme.ts) and is initialised in `App.tsx`.
+
+### Legal — Privacy Policy & Terms of Use
+
+The **About → Legal** rows open detailed, multi-section modals (scrollable, themed) for
+the Privacy Policy and Terms of Use.
 
 ---
 
@@ -233,10 +320,12 @@ the field names (`title`, `imageUrl`, `date`, …) intact — just change their 
 
 ## Design tokens
 
-Defined in `tailwind.config.ts` and mirrored as CSS variables in
-`src/styles/globals.css`.
+Defined in `tailwind.config.ts` as `rgb(var(--color-*) / <alpha-value>)` and backed by
+**channel-based CSS variables** in `src/styles/globals.css`. The default `:root` is the
+dark palette below; a `:root[data-theme='light']` block overrides the same variables for
+light mode, so the theme switcher re-skins the whole app without touching components.
 
-**Colors**
+**Colors** (dark palette — light mode overrides each token under `[data-theme='light']`)
 
 | Token                  | Value     |
 | ---------------------- | --------- |

@@ -11,22 +11,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#131313',
-        canvas: '#000000',
+        // Channel-based CSS variables (declared in globals.css) so Tailwind can
+        // apply alpha modifiers AND swap palettes via the data-theme attribute.
+        background: 'rgb(var(--color-background) / <alpha-value>)',
+        canvas: 'rgb(var(--color-canvas) / <alpha-value>)',
         surface: {
-          DEFAULT: '#181818',
-          container: '#201f1f',
-          high: '#2a2a2a',
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          container: 'rgb(var(--color-surface-container) / <alpha-value>)',
+          high: 'rgb(var(--color-surface-high) / <alpha-value>)',
         },
         primary: {
-          DEFAULT: '#e50914',
-          accent: '#ffb4aa',
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          accent: 'rgb(var(--color-primary-accent) / <alpha-value>)',
         },
-        'on-surface': '#e5e2e1',
-        metadata: '#b3b3b3',
+        'on-surface': 'rgb(var(--color-on-surface) / <alpha-value>)',
+        metadata: 'rgb(var(--color-metadata) / <alpha-value>)',
         outline: {
-          DEFAULT: '#af8782',
-          variant: '#5e3f3b',
+          DEFAULT: 'rgb(var(--color-outline) / <alpha-value>)',
+          variant: 'rgb(var(--color-outline-variant) / <alpha-value>)',
         },
       },
       fontFamily: {

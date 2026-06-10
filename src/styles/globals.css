@@ -10,20 +10,73 @@
 
 /* ---------------------------------------------------------------------------
    Design tokens — single source of truth shared with tailwind.config.ts.
-   Strict dark mode: the app is always rendered against the cinematic canvas.
+   Values are space-separated RGB channels so Tailwind utilities can apply alpha
+   (e.g. bg-primary/40). The default :root is the cinematic dark palette; the
+   [data-theme='light'] block overrides it for light mode.
 --------------------------------------------------------------------------- */
 :root {
-  --color-background: #131313;
-  --color-canvas: #000000;
-  --color-surface: #181818;
-  --color-surface-container: #201f1f;
-  --color-surface-high: #2a2a2a;
-  --color-primary: #e50914;
-  --color-primary-accent: #ffb4aa;
-  --color-on-surface: #e5e2e1;
-  --color-metadata: #b3b3b3;
-  --color-outline: #af8782;
-  --color-outline-variant: #5e3f3b;
+  --color-background: 19 19 19; /* #131313 */
+  --color-canvas: 0 0 0; /* #000000 */
+  --color-surface: 24 24 24; /* #181818 */
+  --color-surface-container: 32 31 31; /* #201f1f */
+  --color-surface-high: 42 42 42; /* #2a2a2a */
+  --color-primary: 229 9 20; /* #e50914 */
+  --color-primary-accent: 255 180 170; /* #ffb4aa */
+  --color-on-surface: 229 226 225; /* #e5e2e1 */
+  --color-metadata: 179 179 179; /* #b3b3b3 */
+  --color-outline: 175 135 130; /* #af8782 */
+  --color-outline-variant: 94 63 59; /* #5e3f3b */
+
+  /* Settings surface palette (exact spec values for dark). */
+  --set-page: #141414;
+  --set-card: #1e1e1e;
+  --set-border: #2a2a2a;
+  --set-strong: #ffffff;
+  --set-subtitle: #777777;
+  --set-header: #666666;
+  --set-label: #dddddd;
+  --set-sublabel: #555555;
+  --set-toggle-off: #333333;
+  --set-pill-bg: #2a2a2a;
+  --set-pill-border: #3a3a3a;
+  --set-pill-text: #888888;
+  --set-btn-border: #3a3a3a;
+  --set-btn-text: #bbbbbb;
+  --set-nav-inactive: #999999;
+  --set-muted: #444444;
+  --set-hover: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='light'] {
+  --color-background: 244 244 245; /* #f4f4f5 */
+  --color-canvas: 255 255 255; /* #ffffff */
+  --color-surface: 255 255 255; /* #ffffff */
+  --color-surface-container: 241 241 242; /* #f1f1f2 */
+  --color-surface-high: 228 228 231; /* #e4e4e7 */
+  --color-primary: 229 9 20; /* #e50914 — brand stays */
+  --color-primary-accent: 198 40 40; /* #c62828 */
+  --color-on-surface: 24 24 27; /* #18181b */
+  --color-metadata: 90 90 95; /* #5a5a5f */
+  --color-outline: 161 161 170; /* #a1a1aa */
+  --color-outline-variant: 212 212 216; /* #d4d4d8 */
+
+  --set-page: #f4f4f5;
+  --set-card: #ffffff;
+  --set-border: #e4e4e7;
+  --set-strong: #18181b;
+  --set-subtitle: #6b7280;
+  --set-header: #9ca3af;
+  --set-label: #27272a;
+  --set-sublabel: #9ca3af;
+  --set-toggle-off: #d1d5db;
+  --set-pill-bg: #e5e7eb;
+  --set-pill-border: #d1d5db;
+  --set-pill-text: #6b7280;
+  --set-btn-border: #d1d5db;
+  --set-btn-text: #374151;
+  --set-nav-inactive: #6b7280;
+  --set-muted: #9ca3af;
+  --set-hover: rgba(0, 0, 0, 0.04);
 }
 
 @layer base {

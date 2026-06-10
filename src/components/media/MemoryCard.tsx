@@ -83,8 +83,9 @@ export function MemoryCard({ memory, className, showProgress = false, onSelect }
         transition={{ duration: 0.25 }}
         className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3"
       >
-        <p className="truncate text-title-md text-on-surface">{memory.title}</p>
-        <div className="mt-1 flex items-center gap-2 text-label-sm text-metadata">
+        {/* Fixed-light text: this overlay always sits on a dark image scrim. */}
+        <p className="truncate text-title-md text-white">{memory.title}</p>
+        <div className="mt-1 flex items-center gap-2 text-label-sm text-white/70">
           <span>{formatDate(memory.date)}</span>
           {memory.location ? (
             <span className="flex items-center gap-0.5 truncate">
@@ -95,7 +96,7 @@ export function MemoryCard({ memory, className, showProgress = false, onSelect }
         <div className="mt-1.5 flex items-center justify-between gap-2">
           <HeartRating value={memory.hearts} />
           {memory.uploadedBy ? (
-            <span className="flex items-center gap-1 truncate text-label-sm text-metadata">
+            <span className="flex items-center gap-1 truncate text-label-sm text-white/70">
               <User size={11} /> {memory.uploadedBy}
             </span>
           ) : null}

@@ -67,15 +67,16 @@ export function HeroBanner({
           <div className="mb-4 flex items-center gap-3">
             <Badge tone="featured">{badgeLabel}</Badge>
             {showDate ? (
-              <span className="text-label-sm uppercase tracking-widest text-metadata">
+              <span className="text-label-sm uppercase tracking-widest text-white/70">
                 {formatDate(memory.date)}
               </span>
             ) : null}
           </div>
 
-          <h1 className="text-headline-mobile text-on-surface md:text-display-lg">{memory.title}</h1>
+          {/* Fixed-light text: this always sits on the dark hero image + vignette. */}
+          <h1 className="text-headline-mobile text-white md:text-display-lg">{memory.title}</h1>
 
-          <p className="mt-4 max-w-xl text-body-md text-metadata line-clamp-3">
+          <p className="mt-4 max-w-xl text-body-md text-white/80 line-clamp-3">
             {memory.description}
           </p>
 
