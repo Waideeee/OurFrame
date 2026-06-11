@@ -22,7 +22,7 @@ export function Footer() {
       </div>
 
       <p className="container-edge mt-8 text-label-sm text-metadata">
-        Made with love. Our Story, Our Way. &copy; 2024
+        Made with love. Our Story, Our Way. &copy; 2026
       </p>
     </footer>
   );

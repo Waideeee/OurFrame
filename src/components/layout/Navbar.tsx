@@ -1,20 +1,76 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut, Menu, Search, Settings, User, Users, X } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, Settings, User, Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAV_LINKS } from '@/lib/constants';
 import { useScrollPosition } from '@/hooks';
-import { useProfile } from '@/app/providers';
+import { useMemories, useProfile } from '@/app/providers';
 import { Logo } from './Logo';
 
 export function Navbar() {
   const { isScrolled } = useScrollPosition(24);
   const { activeProfile, clearActiveProfile } = useProfile();
+  const { getMemory, openMemory } = useMemories();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'partner-memory',
+      text: 'Partner added a new memory',
+      timestamp: '2m ago',
+      thumbnail: 'https://picsum.photos/seed/ourframe-notification-memory/80/80',
+      path: '/recently-added',
+      memoryId: 'm-sunset',
+      unread: true,
+    },
+    {
+      id: 'memory-hearted',
+      text: 'A memory was hearted',
+      timestamp: '18m ago',
+      thumbnail: 'https://picsum.photos/seed/ourframe-notification-heart/80/80',
+      path: '/my-lists',
+      memoryId: 'm-first-date',
+      unread: true,
+    },
+    {
+      id: 'collection-memory',
+      text: 'A memory was added to Our Collection',
+      timestamp: '1h ago',
+      thumbnail: 'https://picsum.photos/seed/ourframe-notification-collection/80/80',
+      path: '/my-lists',
+      memoryId: 'm-monthsary-1',
+      unread: false,
+    },
+  ]);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const hasUnreadNotifications = notifications.some((notification) => notification.unread);
+
+  useEffect(() => {
+    if (!notificationOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setNotificationOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNotificationOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [notificationOpen]);
+
+  useEffect(() => {
+    if (!notificationOpen) return;
+    setNotifications((items) => items.map((item) => ({ ...item, unread: false })));
+  }, [notificationOpen]);
 
   // Close the profile dropdown on outside click or Escape.
   useEffect(() => {
@@ -46,6 +102,16 @@ export function Navbar() {
     // return to the sign-in screen.
     clearActiveProfile();
     navigate('/login');
+  };
+
+  const handleNotificationClick = (notification: (typeof notifications)[number]) => {
+    const memory = getMemory(notification.memoryId);
+    setNotificationOpen(false);
+    setNotifications((items) =>
+      items.map((item) => (item.id === notification.id ? { ...item, unread: false } : item)),
+    );
+    navigate(notification.path);
+    if (memory) openMemory(memory);
   };
 
   const profileMenuItems = [
@@ -100,6 +166,77 @@ export function Navbar() {
           >
             <Search size={20} />
           </button>
+
+          <div ref={notificationRef} className="relative hidden sm:block">
+            <button
+              type="button"
+              aria-label="Notifications"
+              aria-haspopup="menu"
+              aria-expanded={notificationOpen}
+              onClick={() => setNotificationOpen((v) => !v)}
+              className="relative rounded-full p-2 text-on-surface transition-colors hover:bg-white/10"
+            >
+              <Bell size={20} />
+              {hasUnreadNotifications ? (
+                <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-canvas" />
+              ) : null}
+            </button>
+
+            <AnimatePresence>
+              {notificationOpen ? (
+                <motion.div
+                  role="menu"
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="absolute right-0 top-full z-50 mt-3 w-80 origin-top-right rounded-card border border-white/10 bg-[#1e1e1e] py-3 shadow-card-hover"
+                >
+                  <span className="absolute -top-1.5 right-4 h-3 w-3 rotate-45 border-l border-t border-white/10 bg-[#1e1e1e]" />
+
+                  <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 pb-3">
+                    <span className="text-body-md text-on-surface">Notifications</span>
+                    <button
+                      type="button"
+                      onClick={() => setNotifications((items) => items.map((item) => ({ ...item, unread: false })))}
+                      className="text-label-sm text-primary transition-colors hover:text-on-surface"
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+
+                  {notifications.length > 0 ? (
+                    <div className="pt-1">
+                      {notifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          role="menuitem"
+                          onClick={() => handleNotificationClick(notification)}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/10"
+                        >
+                          <img
+                            src={notification.thumbnail}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-card object-cover"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-body-md text-on-surface">{notification.text}</span>
+                            <span className="block text-label-sm text-metadata">{notification.timestamp}</span>
+                          </span>
+                          {notification.unread ? (
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" aria-label="Unread" />
+                          ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-6 text-center text-body-md text-metadata">You're all caught up</div>
+                  )}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
 
           <div ref={profileRef} className="relative hidden sm:block">
             <button
