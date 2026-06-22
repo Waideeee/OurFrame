@@ -8,6 +8,12 @@ import { useScrollPosition } from '@/hooks';
 import { useMemories, useProfile } from '@/app/providers';
 import { Logo } from './Logo';
 
+const RELATIONSHIP_START_DATE_KEY = 'ourframe:relationshipStartDate';
+const ANNIVERSARY_NOTIFICATION_DATE_KEY = 'ourframe:lastAnniversaryNotificationDate';
+
+const getLocalDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
 export function Navbar() {
   const { isScrolled } = useScrollPosition(24);
   const { activeProfile, clearActiveProfile } = useProfile();
@@ -47,7 +53,63 @@ export function Navbar() {
   ]);
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const hasUnreadNotifications = notifications.some((notification) => notification.unread);
+  const unreadNotificationCount = notifications.filter((notification) => notification.unread).length;
+  const notificationBadgeText = unreadNotificationCount >= 3 ? '3+' : String(unreadNotificationCount);
+
+  useEffect(() => {
+    let relationshipStartDate = '';
+    let lastAnniversaryNotificationDate = '';
+    try {
+      relationshipStartDate = localStorage.getItem(RELATIONSHIP_START_DATE_KEY) ?? '';
+      lastAnniversaryNotificationDate = localStorage.getItem(ANNIVERSARY_NOTIFICATION_DATE_KEY) ?? '';
+    } catch {
+      relationshipStartDate = '';
+      lastAnniversaryNotificationDate = '';
+    }
+    if (!relationshipStartDate) return;
+
+    const startDate = new Date(`${relationshipStartDate}T00:00:00`);
+    if (Number.isNaN(startDate.getTime())) return;
+
+    const today = new Date();
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    let nextAnniversary = new Date(todayDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    if (nextAnniversary < todayDate) {
+      nextAnniversary = new Date(todayDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
+    }
+
+    const daysUntilAnniversary = Math.round(
+      (nextAnniversary.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    if (daysUntilAnniversary < 0 || daysUntilAnniversary > 7) return;
+
+    const todayKey = getLocalDateKey(todayDate);
+    if (lastAnniversaryNotificationDate === todayKey) return;
+
+    const text =
+      daysUntilAnniversary === 0
+        ? 'Today is your anniversary!'
+        : `${daysUntilAnniversary} ${daysUntilAnniversary === 1 ? 'day' : 'days'} until your anniversary`;
+
+    setNotifications((items) => [
+      {
+        id: `anniversary-countdown-${todayKey}`,
+        text,
+        timestamp: 'Today',
+        thumbnail: 'https://picsum.photos/seed/ourframe-notification-anniversary/80/80',
+        path: '/',
+        memoryId: '',
+        unread: true,
+      },
+      ...items,
+    ]);
+
+    try {
+      localStorage.setItem(ANNIVERSARY_NOTIFICATION_DATE_KEY, todayKey);
+    } catch {
+      /* storage unavailable — notification remains for this session */
+    }
+  }, []);
 
   useEffect(() => {
     if (!notificationOpen) return;
@@ -65,11 +127,6 @@ export function Navbar() {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [notificationOpen]);
-
-  useEffect(() => {
-    if (!notificationOpen) return;
-    setNotifications((items) => items.map((item) => ({ ...item, unread: false })));
   }, [notificationOpen]);
 
   // Close the profile dropdown on outside click or Escape.
@@ -177,8 +234,10 @@ export function Navbar() {
               className="relative rounded-full p-2 text-on-surface transition-colors hover:bg-white/10"
             >
               <Bell size={20} />
-              {hasUnreadNotifications ? (
-                <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-canvas" />
+              {unreadNotificationCount > 0 ? (
+                <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-canvas">
+                  {notificationBadgeText}
+                </span>
               ) : null}
             </button>
 

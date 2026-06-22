@@ -5,6 +5,15 @@ photos, videos, and collections — as if each one were a featured release.
 
 ---
 
+## Recent updates — 2026-06-22
+
+- Added anniversary countdown notifications — shows one unread notification per day from 7 days before the yearly anniversary through the anniversary day.
+- Added relationship start date to signup — saves the selected date for anniversary countdown notifications.
+- Added signup password confirmation — includes the missing confirm password field in the requested form order.
+- Updated notification badge — replaces the unread dot with a numbered unread counter that hides at 0.
+
+---
+
 ## Recent updates — 2026-06-10
 
 - **Navbar profile menu** — the top-right avatar now opens a Netflix-style dropdown
