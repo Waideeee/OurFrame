@@ -1,5 +1,6 @@
 import type { MemoryCategory, Mood } from '@/types';
 
+
 export const APP_NAME = 'OurFrame';
 export const APP_TAGLINE = 'Our Story, Our Way.';
 
