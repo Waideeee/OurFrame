@@ -2,17 +2,49 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthLayout } from '@/components/layout';
 import { Button, Input } from '@/components/ui';
+import { useAuth } from '@/app/providers'; 
+
 
 const FOOTER_ITEMS = ['FAQ', 'Help Center', 'Terms of Use', 'Privacy'];
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const {login} = useAuth();
   const [remember, setRemember] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+
+  const  handleSubmit =  async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Mock auth — go straight to profile selection.
-    navigate('/profiles');
+    setError(null);
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+   
+    
+
+    try {
+
+      setIsSubmitting(true)
+
+      await login({email,password})
+
+      navigate('/profiles');
+
+    } catch (err) {
+
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+      
+    }finally{
+
+      setIsSubmitting(false)
+    }
+
+
+
+    
+
   };
 
   return (
@@ -42,11 +74,12 @@ export function LoginPage() {
       <h1 className="text-headline-lg text-on-surface">Sign In</h1>
 
       <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-4">
-        <Input label="Email" type="email" placeholder="you@ourframe.love" required autoComplete="email" />
-        <Input label="Password" revealToggle placeholder="Password" required autoComplete="current-password" />
+        <Input label="Email" type="email" placeholder="you@ourframe.love" required autoComplete="email"  name="email"/>
+        <Input label="Password" revealToggle placeholder="Password" required autoComplete="current-password" name="password" />
+        {error && <p className="text-sm text-red-500">{error}</p>}
 
-        <Button type="submit" variant="brand" size="lg" fullWidth className="mt-2">
-          Sign In
+        <Button type="submit" variant="brand" size="lg" fullWidth className="mt-2" disabled={isSubmitting}>
+          {isSubmitting ? 'Signing in...' : 'Sign In'}
         </Button>
 
         <div className="flex items-center justify-between text-label-sm text-metadata">

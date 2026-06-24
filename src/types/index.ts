@@ -95,11 +95,11 @@ export interface Collection {
 }
 
 export interface Profile {
-  id: string;
+  profileId: string;
   name: string;
   avatarUrl: string;
   /** "add" tiles render the dashed + affordance instead of a real profile. */
-  kind: 'partner' | 'shared' | 'add';
+  kind: 'owner' | 'partner' | 'shared' | 'add';
 }
 
 /** A logical "row" of memories on a content page. */

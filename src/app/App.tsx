@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { initTheme } from '@/lib/theme';
-import { ProfileProvider, MemoryProvider } from './providers';
+import { ProfileProvider, MemoryProvider , AuthProvider} from './providers';
 
 /** Scrolls back to the top whenever the route changes. */
 function ScrollToTop() {
@@ -17,11 +17,13 @@ export function App() {
   useEffect(() => initTheme(), []);
 
   return (
-    <ProfileProvider>
-      <MemoryProvider>
-        <ScrollToTop />
-        <Outlet />
-      </MemoryProvider>
-    </ProfileProvider>
+    <AuthProvider>
+      <ProfileProvider>
+        <MemoryProvider>
+          <ScrollToTop />
+          <Outlet />
+        </MemoryProvider>
+      </ProfileProvider>
+    </AuthProvider>
   );
 }
