@@ -17,7 +17,7 @@ export function ProfileSelectionPage() {
       return;
     }
     if (manageMode) {
-      navigate(`/profiles/edit/${profile.id}`);
+      navigate(`/profiles/edit/${profile.profileId}`);
       return;
     }
     setActiveProfile(profile);
@@ -37,7 +37,7 @@ export function ProfileSelectionPage() {
 
         <div className="flex flex-wrap items-start justify-center gap-6 md:gap-10">
           {profiles.map((profile) => (
-            <ProfileCard key={profile.id} profile={profile} onSelect={handleSelect} />
+            <ProfileCard key={profile.profileId} profile={profile} onSelect={handleSelect} />
           ))}
         </div>
 

@@ -4,12 +4,9 @@ import { ProfileContext, type ProfileContextValue } from './profile-context';
 import { useAuth } from './auth-context'; 
 import { apiFetch } from '@/lib/api';
 
-let profileCounter = 0;
+
 /** Stable-ish id without Date.now()/Math.random(). */
-function nextProfileId(): string {
-  profileCounter += 1;
-  return `p-new-${profileCounter}`;
-}
+
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
 
@@ -67,31 +64,44 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   loadProfiles();
 }, [isAuthenticated]);
 
-  const addProfile = useCallback((data: { name: string; avatarUrl: string }): Profile => {
-    const profile: Profile = {
-      profileId: nextProfileId(),
-      name: data.name,
-      avatarUrl: data.avatarUrl,
-      kind: 'partner',
-    };
-    // Insert before the trailing "add" tile so the + stays last.
-    setProfiles((prev) => {
-      const addIndex = prev.findIndex((p) => p.kind === 'add');
-      if (addIndex === -1) return [...prev, profile];
-      return [...prev.slice(0, addIndex), profile, ...prev.slice(addIndex)];
-    });
-    return profile;
-  }, []);
+  const addProfile = useCallback(async (data: { name: string; avatarUrl: string }): Promise<Profile> => {
+  const created = await apiFetch<{ profileId: string; name: string; avatarUrl: string | null; kind: 'owner' | 'partner' | 'shared' }>('/profiles', {
+    method: 'POST',
+    body: data,
+  });
 
-  const updateProfile = useCallback((id: string, patch: Partial<Profile>) => {
-    setProfiles((prev) => prev.map((p) => (p.profileId === id ? { ...p, ...patch } : p)));
-    setActiveProfileState((prev) => (prev && prev.profileId === id ? { ...prev, ...patch } : prev));
-  }, []);
+  const profile: Profile = {
+    profileId: created.profileId,
+    name: created.name,
+    avatarUrl: created.avatarUrl ?? '',
+    kind: created.kind,
+  };
 
-  const deleteProfile = useCallback((id: string) => {
-    setProfiles((prev) => prev.filter((p) => p.profileId !== id));
-    setActiveProfileState((prev) => (prev && prev.profileId === id ? null : prev));
-  }, []);
+  setProfiles((prev) => {
+    const addIndex = prev.findIndex((p) => p.kind === 'add');
+    if (addIndex === -1) return [...prev, profile];
+    return [...prev.slice(0, addIndex), profile, ...prev.slice(addIndex)];
+  });
+
+  return profile;
+}, []);
+
+  const updateProfile = useCallback(async (id: string, patch: Partial<Profile>): Promise<void> => {
+  await apiFetch(`/profiles/${id}`, {
+    method: 'PUT',
+    body: patch,
+  });
+
+  setProfiles((prev) => prev.map((p) => (p.profileId === id ? { ...p, ...patch } : p)));
+  setActiveProfileState((prev) => (prev && prev.profileId === id ? { ...prev, ...patch } : prev));
+}, []);
+
+  const deleteProfile = useCallback(async (id: string): Promise<void> => {
+  await apiFetch(`/profiles/${id}`, { method: 'DELETE' });
+
+  setProfiles((prev) => prev.filter((p) => p.profileId !== id));
+  setActiveProfileState((prev) => (prev && prev.profileId === id ? null : prev));
+}, []);
 
   const value = useMemo<ProfileContextValue>(
     () => ({

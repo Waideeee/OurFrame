@@ -440,8 +440,8 @@ export function SettingsPage() {
 
   const partner = useMemo(
     () =>
-      realProfiles.find((p) => p.id !== activeProfile?.id && p.kind === 'partner') ??
-      realProfiles.find((p) => p.id !== activeProfile?.id),
+      realProfiles.find((p) => p.profileId !== activeProfile?.profileId && p.kind === 'partner') ??
+      realProfiles.find((p) => p.profileId !== activeProfile?.profileId),
     [realProfiles, activeProfile],
   );
 
@@ -459,7 +459,7 @@ export function SettingsPage() {
 
   const roleFor = (profileId: string, kind: string): 'Owner' | 'Partner' | 'Shared' => {
     if (kind === 'shared') return 'Shared';
-    if (profileId === activeProfile?.id) return 'Owner';
+    if (profileId === activeProfile?.profileId) return 'Owner';
     return 'Partner';
   };
 
@@ -694,10 +694,10 @@ export function SettingsPage() {
               <>
                 <Card header="Profiles in this frame">
                   {realProfiles.map((p, i) => {
-                    const role = roleFor(p.id, p.kind);
+                    const role = roleFor(p.profileId, p.kind);
                     return (
                       <div
-                        key={p.id}
+                        key={p.profileId}
                         style={i === 0 ? undefined : ROW_DIVIDER}
                         className="flex items-center justify-between gap-4 py-3.5"
                       >
@@ -722,7 +722,7 @@ export function SettingsPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <RoleBadge role={role} />
-                          <SettingsButton onClick={() => navigate(`/profiles/edit/${p.id}`)}>
+                          <SettingsButton onClick={() => navigate(`/profiles/edit/${p.profileId}`)}>
                             Edit
                           </SettingsButton>
                         </div>

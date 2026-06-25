@@ -5,12 +5,11 @@ export interface ProfileContextValue {
   activeProfile: Profile | null;
   setActiveProfile: (profile: Profile) => void;
   clearActiveProfile: () => void;
-  /** Live, editable list of profiles (seeded from the mock data layer). */
   profiles: Profile[];
   getProfile: (id: string) => Profile | undefined;
-  addProfile: (data: { name: string; avatarUrl: string }) => Profile;
-  updateProfile: (id: string, patch: Partial<Profile>) => void;
-  deleteProfile: (id: string) => void;
+  addProfile: (data: { name: string; avatarUrl: string }) => Promise<Profile>;
+  updateProfile: (id: string, patch: Partial<Profile>) => Promise<void>;
+  deleteProfile: (id: string) => Promise<void>;
 }
 
 export const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);

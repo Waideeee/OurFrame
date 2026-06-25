@@ -4,11 +4,8 @@ import { Camera, Pencil, Trash2 } from 'lucide-react';
 import { useMemories, useProfile } from '@/app/providers';
 import { Button, Input } from '@/components/ui';
 
-/**
- * "My Profile" — the active profile views and edits its own name/avatar, sees
- * read-only upload stats, and can delete the profile from the danger zone.
- * Reuses the same avatar-upload behaviour as the Add/Edit Profile pages.
- */
+
+
 export function ProfilePage() {
   const navigate = useNavigate();
   const { activeProfile, updateProfile, deleteProfile } = useProfile();
@@ -18,8 +15,10 @@ export function ProfilePage() {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(activeProfile?.name ?? '');
   const [avatarUrl, setAvatarUrl] = useState(activeProfile?.avatarUrl ?? '');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Stats are pulled from the memories this profile uploaded (read-only).
+  
   const stats = useMemo(() => {
     const mine = activeProfile
       ? memories.filter((m) => m.uploadedBy === activeProfile.name)
@@ -55,18 +54,31 @@ export function ProfilePage() {
     setAvatarUrl(URL.createObjectURL(file));
   };
 
-  const handleSave = (e: FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
-    updateProfile(activeProfile.id, {
-      name: name.trim() || activeProfile.name,
-      avatarUrl: avatarUrl || activeProfile.avatarUrl,
-    });
-    setEditingName(false);
+    setError(null);
+    try {
+      setIsSubmitting(true);
+      await updateProfile(activeProfile.profileId, {
+        name: name.trim() || activeProfile.name,
+        avatarUrl: avatarUrl || activeProfile.avatarUrl,
+      });
+      setEditingName(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = () => {
-    deleteProfile(activeProfile.id);
-    navigate('/profiles');
+  const handleDelete = async () => {
+    setError(null);
+    try {
+      await deleteProfile(activeProfile.profileId);
+      navigate('/profiles');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete profile');
+    }
   };
 
   return (
@@ -123,9 +135,10 @@ export function ProfilePage() {
             )}
           </div>
 
-          <Button type="submit" variant="brand" size="lg" fullWidth className="mt-6">
-            Save Changes
+           <Button type="submit" variant="brand" size="lg" fullWidth className="mt-6" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
           </Button>
+          {error && <p className="mt-3 text-center text-sm text-red-500">{error}</p>}
 
           {/* Stats */}
           <div className="mt-8 border-t border-white/10 pt-6">

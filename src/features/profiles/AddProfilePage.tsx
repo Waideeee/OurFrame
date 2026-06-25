@@ -12,19 +12,29 @@ export function AddProfilePage() {
 
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAvatar = (file: File | undefined) => {
     if (!file) return;
     setAvatarUrl(URL.createObjectURL(file));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    addProfile({
-      name: name.trim() || 'New Profile',
-      avatarUrl: avatarUrl || 'https://picsum.photos/seed/ourframe-new/300/300',
-    });
-    navigate('/profiles');
+    setError(null);
+    try {
+      setIsSubmitting(true);
+      await addProfile({
+        name: name.trim() || 'New Profile',
+        avatarUrl: avatarUrl || 'https://picsum.photos/seed/ourframe-new/300/300',
+      });
+      navigate('/profiles');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -40,7 +50,6 @@ export function AddProfilePage() {
           </h1>
 
           <div className="flex flex-col items-center gap-8">
-            {/* Square avatar upload */}
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
@@ -77,8 +86,9 @@ export function AddProfilePage() {
             />
 
             <div className="flex w-full flex-col gap-3">
-              <Button type="submit" variant="brand" size="lg" fullWidth>
-                Create Profile
+              {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+              <Button type="submit" variant="brand" size="lg" fullWidth disabled={isSubmitting}>
+                {isSubmitting ? 'Creating...' : 'Create Profile'}
               </Button>
               <Link
                 to="/profiles"

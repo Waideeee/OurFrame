@@ -14,6 +14,8 @@ export function EditProfilePage() {
   const profile = getProfile(id);
   const [name, setName] = useState(profile?.name ?? '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? '');
+   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!profile) {
     return (
@@ -34,15 +36,28 @@ export function EditProfilePage() {
     setAvatarUrl(URL.createObjectURL(file));
   };
 
-  const handleSave = (e: FormEvent) => {
+   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
-    updateProfile(profile.id, { name: name.trim() || profile.name, avatarUrl });
-    navigate('/profiles');
+    setError(null);
+    try {
+      setIsSubmitting(true);
+      await updateProfile(profile.profileId, { name: name.trim() || profile.name, avatarUrl });
+      navigate('/profiles');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = () => {
-    deleteProfile(profile.id);
-    navigate('/profiles');
+  const handleDelete = async () => {
+    setError(null);
+    try {
+      await deleteProfile(profile.profileId);
+      navigate('/profiles');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete profile');
+    }
   };
 
   return (
@@ -95,8 +110,9 @@ export function EditProfilePage() {
             />
 
             <div className="flex w-full flex-col gap-3">
-              <Button type="submit" variant="brand" size="lg" fullWidth>
-                Save
+              {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+              <Button type="submit" variant="brand" size="lg" fullWidth disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save'}
               </Button>
               <button
                 type="button"
