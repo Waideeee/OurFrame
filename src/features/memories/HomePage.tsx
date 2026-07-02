@@ -4,26 +4,52 @@ import { GENRE_FILTERS } from '@/lib/constants';
 import { useMemories } from '@/app/providers';
 import { HeroBanner, MediaRow, FeaturedGrid } from '@/components/media';
 import { CategoryChip } from '@/components/ui';
+import {Check, Info ,Play ,Plus ,} from 'lucide-react';
 
 export function HomePage() {
   const [activeGenre, setActiveGenre] = useState<MemoryCategory | null>(null);
-  const { getMemory, memoriesByCategory, recentMemories, memories, openMemory } = useMemories();
-
-  // Anchor memories may have been deleted, so fall back gracefully.
-  const hero = getMemory('m-sunset') ?? recentMemories[0];
-  const firstDateAnchor = getMemory('m-first-date');
-  const firstDate = [
-    ...(firstDateAnchor ? [firstDateAnchor] : []),
-    ...memoriesByCategory('Dates'),
-  ].filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i);
+  const { memoriesByCategory, recentMemories, memories, openMemory,toggleCollection } = useMemories();
+  
+  const hero = memories.find((m) => m.featured) ?? recentMemories[0];
+  const firstDate = memoriesByCategory('Dates');
   const occasions = memoriesByCategory('Occasions');
-  const bigTrip = memories.filter((m) =>
-    ['m-monthsary-3', 'm-santorini', 'm-amalfi', 'm-roadtrip', 'm-european-summer'].includes(m.id),
-  );
+  const bigTrip = memoriesByCategory('Travel');
+  
 
   return (
     <>
-      {hero ? <HeroBanner memory={hero} /> : null}
+     {hero ? (
+  <HeroBanner
+    memory={hero}
+    actions={[
+      {
+        label: 'Play',
+        icon: <Play size={18} className="fill-canvas" />,
+        variant: 'primary',
+        onClick: () => {
+          openMemory(hero);
+        },
+      },
+      {
+        label: hero.inCollection ? 'In Collection' : 'Collection',
+        icon: hero.inCollection ? <Check size={18} /> : <Plus size={18} />,
+        variant: 'secondary',
+        onClick: () => {
+          toggleCollection(hero.memoryId);
+        },
+      },
+      {
+        label: '',
+        icon: <Info size={18} />,
+        variant: 'icon',
+        ariaLabel: 'More information',
+        onClick: () => {
+          openMemory(hero);
+        },
+      },
+    ]}
+  />
+) : null}
 
       <div className="relative z-10 -mt-16 flex flex-col gap-row-gap pb-20">
         <MediaRow title="First Date" memories={firstDate} onSelect={openMemory} />

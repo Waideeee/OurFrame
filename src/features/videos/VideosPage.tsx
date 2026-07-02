@@ -1,9 +1,10 @@
-import { Play, Plus } from 'lucide-react';
+import { Check, Info, Play, Plus } from 'lucide-react';
 import { useMemories } from '@/app/providers';
 import { HeroBanner, MediaRow } from '@/components/media';
 
+
 export function VideosPage() {
-  const { getMemory, continueWatching, memoriesByType, openMemory } = useMemories();
+  const { getMemory, continueWatching, memoriesByType, openMemory, toggleCollection } = useMemories();
   const videos = memoriesByType('video');
   const hero = getMemory('m-santorini') ?? videos[0];
   const travel = videos.filter((m) => m.category === 'Travel');
@@ -13,24 +14,34 @@ export function VideosPage() {
     <>
       {hero ? (
       <HeroBanner
-        memory={hero}
-        badgeLabel="Featured Memory"
-        showDate
-        actions={[
-          { label: 'Play', icon: <Play size={18} className="fill-canvas" />, variant: 'primary' },
-          { label: 'My List', icon: <Plus size={18} />, variant: 'secondary' },
-          {
-            label: '',
-            icon: (
-              <span className="flex h-4 w-4 items-center justify-center font-serif text-sm font-bold leading-none">
-                i
-              </span>
-            ),
-            variant: 'icon',
-            ariaLabel: 'More information',
-            className: 'p-1.5',
-          },
-        ]}
+         memory={hero}
+    actions={[
+      {
+        label: 'Play',
+        icon: <Play size={18} className="fill-canvas" />,
+        variant: 'primary',
+        onClick: () => {
+          openMemory(hero);
+        },
+      },
+      {
+        label: hero.inCollection ? 'In Collection' : 'Collection',
+        icon: hero.inCollection ? <Check size={18} /> : <Plus size={18} />,
+        variant: 'secondary',
+        onClick: () => {
+          toggleCollection(hero.memoryId);
+        },
+      },
+      {
+        label: '',
+        icon: <Info size={18} />,
+        variant: 'icon',
+        ariaLabel: 'More information',
+        onClick: () => {
+          openMemory(hero);
+        },
+      },
+    ]}
       />
       ) : null}
 

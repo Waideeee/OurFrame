@@ -56,7 +56,7 @@ export function MemoryCard({ memory, className, showProgress = false, onSelect }
       aria-label={`${memory.title}${memory.location ? `, ${memory.location}` : ''}`}
     >
       <img
-        src={memory.imageUrl}
+        src={memory.mediaUrl}
         alt={memory.title}
         loading="lazy"
         className="h-full w-full object-cover"

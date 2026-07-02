@@ -1,26 +1,25 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { MapPin, Star, UploadCloud, X } from 'lucide-react';
-import type { MediaItem, Memory, MemoryCategory, Mood } from '@/types';
+import type { MemoryCategory, Mood } from '@/types';
 import { UPLOAD_CATEGORIES, UPLOAD_MOODS } from '@/lib/constants';
 import { detectMediaType } from '@/lib/utils';
-import { useMemories, useProfile } from '@/app/providers';
+import { useMemories} from '@/app/providers';
+import { uploadFile } from '@/lib/upload';
 import { Dropzone } from '@/components/common';
 import { MediaRow } from '@/components/media';
 import { Button, Input } from '@/components/ui';
 
-/** A pending file with its preview URL, detected type, and optional caption. */
 interface PendingFile {
   id: string;
   name: string;
   url: string;
   type: 'photo' | 'video';
   caption: string;
+  file: File;   // ← dagdag — kailangan para sa aktwal na upload
 }
 
 export function UploadPage() {
   const { addMemory, recentMemories, openMemory } = useMemories();
-  const { activeProfile } = useProfile();
-
   const [submitted, setSubmitted] = useState(false);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -30,6 +29,8 @@ export function UploadPage() {
   const [mood, setMood] = useState<Mood | ''>('');
   const [isFeatured, setIsFeatured] = useState(false);
   const [files, setFiles] = useState<PendingFile[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const idCounter = useRef(0);
   const nextId = (prefix: string) => {
@@ -43,9 +44,9 @@ export function UploadPage() {
       id: nextId('upload'),
       name: file.name,
       url: URL.createObjectURL(file),
-      // Auto-detect photo vs video from the file extension.
       type: detectMediaType(file.name),
       caption: '',
+      file,   // ← dagdag
     }));
     setFiles(mapped);
   };
@@ -62,40 +63,45 @@ export function UploadPage() {
     });
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
 
-    const mediaItems: MediaItem[] | undefined = files.length
-      ? files.map((f) => ({
-          id: f.id,
-          url: f.url,
-          type: f.type,
-          caption: f.caption.trim() || undefined,
-        }))
-      : undefined;
+    if (!category) {
+      setError('Please choose a category');
+      return;
+    }
+    if (files.length === 0) {
+      setError('Please attach at least one photo or video');
+      return;
+    }
 
-    // The memory's overall media type follows its first file.
-    const memoryType = files[0]?.type ?? 'photo';
+    try {
+      setIsUploading(true);
+      const primaryFile = files[0];
+      const mediaUrl = await uploadFile(primaryFile.file);
 
-    const memory: Memory = {
-      id: nextId('m'),
-      title: title.trim() || 'Untitled Memory',
-      description: story.trim(),
-      imageUrl: files[0]?.url ?? '/lizard.jpg',
-      type: memoryType,
-      category: (category || 'Daily Life') as MemoryCategory,
-      mood: mood || undefined,
-      date: date || new Date().toISOString().slice(0, 10),
-      location: location.trim() || undefined,
-      hearts: 0,
-      featured: isFeatured,
-      uploadedBy: activeProfile?.name,
-      mediaItems,
-    };
+      await addMemory({
+        title: title.trim() || 'Untitled Memory',
+        description: story.trim(),
+        mediaUrl,
+        type: primaryFile.type,
+        category,
+        mood: mood || undefined,
+        date: date || new Date().toISOString().slice(0, 10),
+        location: location.trim() || undefined,
+        featured: isFeatured,
+      });
 
-    addMemory(memory);
-    setSubmitted(true);
+      setSubmitted(true);
+      setFiles([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload memory');
+    } finally {
+      setIsUploading(false);
+    }
   };
+
 
   return (
     <div className="pb-24 pt-24">
@@ -277,8 +283,9 @@ export function UploadPage() {
             </button>
           </label>
 
-          <Button type="submit" variant="brand" size="lg" leadingIcon={<UploadCloud size={18} />}>
-            Upload Memory
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <Button type="submit" variant="brand" size="lg" leadingIcon={<UploadCloud size={18} />} disabled={isUploading}>
+            {isUploading ? 'Uploading...' : 'Upload Memory'}
           </Button>
 
           {submitted ? (

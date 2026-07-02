@@ -26,7 +26,7 @@ export function FeaturedGrid({ title, memories, onSelect }: FeaturedGridProps) {
           return (
             <motion.button
               type="button"
-              key={memory.id}
+              key={memory.memoryId}
               onClick={() => onSelect?.(memory)}
               whileHover={{ scale: 1.03 }}
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -37,7 +37,7 @@ export function FeaturedGrid({ title, memories, onSelect }: FeaturedGridProps) {
               aria-label={memory.title}
             >
               <img
-                src={memory.imageUrl}
+                src={memory.mediaUrl}
                 alt={memory.title}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

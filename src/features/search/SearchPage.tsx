@@ -54,7 +54,7 @@ export function SearchPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {results.map((memory) => (
             <MemoryCard
-              key={memory.id}
+              key={memory.memoryId}
               memory={memory}
               className="w-full"
               onSelect={openMemory}

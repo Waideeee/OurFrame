@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Images, Info } from 'lucide-react';
+import { Check, Heart,  Play, Plus } from 'lucide-react';
 import type { Mood } from '@/types';
 import { MOOD_FILTERS } from '@/lib/constants';
 import { img } from '@/data';
@@ -7,11 +7,12 @@ import { useMemories } from '@/app/providers';
 import { HeroBanner, MediaRow, FeaturedGrid } from '@/components/media';
 import { CategoryChip } from '@/components/ui';
 
+
 const ANNIVERSARY_YEARS = ['2023', '2022', '2021', '2020', '2019', '2018'];
 
 export function PhotosPage() {
   const [mood, setMood] = useState<Mood | 'All Captures'>('All Captures');
-  const { getMemory, memoriesByType, openMemory } = useMemories();
+  const { getMemory, memoriesByType, openMemory, toggleCollection,toggleLike } = useMemories();
   const photos = memoriesByType('photo');
   const hero = getMemory('m-amalfi') ?? photos[0];
 
@@ -24,11 +25,31 @@ export function PhotosPage() {
       {hero ? (
       <HeroBanner
         memory={hero}
-        actions={[
-          { label: 'Slideshow', icon: <Images size={18} />, variant: 'primary' },
-          { label: 'Details', icon: <Info size={18} />, variant: 'secondary' },
-          { label: '', icon: <Heart size={20} />, variant: 'icon', ariaLabel: 'Love this memory' },
-        ]}
+    actions={[
+      {
+        label: 'Play',
+        icon: <Play size={18} className="fill-canvas" />,
+        variant: 'primary',
+        onClick: () => {
+          openMemory(hero);
+        },
+      },
+      {
+        label: hero.inCollection ? 'In  My list' : 'My list',
+        icon: hero.inCollection ? <Check size={18} /> : <Plus size={18} />,
+        variant: 'secondary',
+        onClick: () => {
+          toggleCollection(hero.memoryId);
+        },
+      },
+      {
+       label: 'Like',
+       icon: <Heart size={18} className={hero.liked ? 'fill-white' : ''} />,
+       variant: 'circle',
+       active: hero.liked,
+       onClick: () => toggleLike(hero.memoryId),
+      },
+    ]}
       />
       ) : null}
 

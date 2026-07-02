@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             body:data,
         })
 
-        await login({email: data.email, password: data.password})
-  }, [login]);
+        
+  }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)

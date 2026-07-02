@@ -4,6 +4,7 @@ import { Camera, Plus } from 'lucide-react';
 import { useProfile } from '@/app/providers';
 import { Button, Input } from '@/components/ui';
 import { Logo } from '@/components/layout';
+import { uploadFile } from '@/lib/upload';
 
 export function AddProfilePage() {
   const navigate = useNavigate();
@@ -14,12 +15,21 @@ export function AddProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  const handleAvatar = (file: File | undefined) => {
-    if (!file) return;
-    setAvatarUrl(URL.createObjectURL(file));
-  };
 
+  const handleAvatar = async (file: File | undefined) => {
+  if (!file) return;
+  try {
+    setIsUploadingAvatar(true);
+    const url = await uploadFile(file);
+    setAvatarUrl(url);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to upload photo');
+  } finally {
+    setIsUploadingAvatar(false);
+  }
+};
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -52,8 +62,9 @@ export function AddProfilePage() {
           <div className="flex flex-col items-center gap-8">
             <button
               type="button"
+              disabled={isUploadingAvatar}
               onClick={() => fileRef.current?.click()}
-              className="group relative h-36 w-36 overflow-hidden rounded-avatar border-2 border-dashed border-outline-variant bg-surface transition-colors hover:border-on-surface"
+              className="group relative h-36 w-36 overflow-hidden rounded-avatar border-2 border-dashed border-outline-variant bg-surface transition-colors hover:border-on-surface disabled:cursor-not-allowed disabled:opacity-70"
               aria-label="Upload profile photo"
             >
               {avatarUrl ? (
@@ -64,8 +75,11 @@ export function AddProfilePage() {
                   <span className="text-label-sm">Add photo</span>
                 </span>
               )}
-              <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera size={28} className="text-on-surface" />
+              <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                <Camera size={26} className="text-on-surface" />
+                <span className="text-label-sm text-on-surface">
+                  {isUploadingAvatar ? 'Uploading...' : 'Change'}
+                </span>
               </span>
             </button>
             <input
@@ -87,8 +101,18 @@ export function AddProfilePage() {
 
             <div className="flex w-full flex-col gap-3">
               {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-              <Button type="submit" variant="brand" size="lg" fullWidth disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Profile'}
+              <Button
+                type="submit"
+                variant="brand"
+                size="lg"
+                fullWidth
+                disabled={isSubmitting || isUploadingAvatar}
+              >
+                {isSubmitting
+                  ? 'Creating...'
+                  : isUploadingAvatar
+                    ? 'Uploading Photo...'
+                    : 'Create Profile'}
               </Button>
               <Link
                 to="/profiles"

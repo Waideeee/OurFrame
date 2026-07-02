@@ -5,6 +5,7 @@ import type { MediaItem, MemoryCategory, Mood } from '@/types';
 import { UPLOAD_CATEGORIES, UPLOAD_MOODS } from '@/lib/constants';
 import { useMemories } from '@/app/providers';
 import { Button, Input } from '@/components/ui';
+import { uploadFile } from '@/lib/upload';
 
 export function EditMemoryPage() {
   const navigate = useNavigate();
@@ -30,9 +31,12 @@ export function EditMemoryPage() {
   const [mood, setMood] = useState<Mood | ''>(memory?.mood ?? '');
   const [isFeatured, setIsFeatured] = useState(!!memory?.featured);
   const [story, setStory] = useState(memory?.description ?? '');
-  const [coverUrl, setCoverUrl] = useState(memory?.imageUrl ?? '');
+  const [coverUrl, setCoverUrl] = useState(memory?.mediaUrl ?? '');
   const [items, setItems] = useState<MediaItem[]>(memory?.mediaItems ?? []);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   if (!memory) {
     return (
@@ -49,10 +53,18 @@ export function EditMemoryPage() {
     );
   }
 
-  const handleCover = (file: File | undefined) => {
-    if (!file) return;
-    setCoverUrl(URL.createObjectURL(file));
-  };
+  const handleCover = async (file: File | undefined) => {
+  if (!file) return;
+  try {
+    setIsUploadingCover(true);
+    const url = await uploadFile(file);
+    setCoverUrl(url);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to upload cover image');
+  } finally {
+    setIsUploadingCover(false);
+  }
+};
 
   const setCaption = (itemId: string, caption: string) => {
     setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, caption } : it)));
@@ -62,28 +74,37 @@ export function EditMemoryPage() {
     setItems((prev) => prev.filter((it) => it.id !== itemId));
   };
 
-  const handleSave = (e: FormEvent) => {
-    e.preventDefault();
-    updateMemory(memory.id, {
+  const handleSave = async (e: FormEvent) => {
+  e.preventDefault();
+  setError(null);
+  try {
+    setIsSubmitting(true);
+    await updateMemory(memory.memoryId, {
       title: title.trim() || memory.title,
       description: story.trim(),
-      imageUrl: coverUrl || memory.imageUrl,
+      mediaUrl: coverUrl || memory.mediaUrl,
       category: (category || memory.category) as MemoryCategory,
       mood: mood || undefined,
       date: date || memory.date,
       location: location.trim() || undefined,
       featured: isFeatured,
-      mediaItems: items.length
-        ? items.map((it) => ({ ...it, caption: it.caption?.trim() || undefined }))
-        : undefined,
     });
     navigate(-1);
-  };
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Something went wrong');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-  const handleDelete = () => {
-    deleteMemory(memory.id);
+  const handleDelete = async () => {
+  try {
+    await deleteMemory(memory.memoryId);
     navigate('/');
-  };
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to delete memory');
+  }
+};
 
   return (
     <div className="pb-24 pt-24">
@@ -102,6 +123,7 @@ export function EditMemoryPage() {
             <span className="text-label-sm font-medium text-metadata">Cover image</span>
             <button
               type="button"
+              disabled={isUploadingCover}
               onClick={() => coverRef.current?.click()}
               className="group relative aspect-video w-full overflow-hidden rounded-card bg-surface"
               aria-label="Change cover image"
@@ -281,8 +303,9 @@ export function EditMemoryPage() {
           </label>
 
           <div className="flex flex-col gap-3">
-            <Button type="submit" variant="brand" size="lg" fullWidth leadingIcon={<Save size={18} />}>
-              Save Changes
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <Button type="submit" variant="brand" size="lg" fullWidth leadingIcon={<Save size={18} />} disabled={isSubmitting || isUploadingCover}>
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
 
             {confirmingDelete ? (

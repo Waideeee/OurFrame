@@ -12,6 +12,7 @@ import { MyListsPage } from '@/features/my-lists';
 import { RecentlyAddedPage } from '@/features/recently-added';
 import { SearchPage } from '@/features/search';
 import { UploadPage } from '@/features/upload';
+import { VerifyEmailPage } from '@/features/auth/VerifyEmailPage';
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
           { path: '/my-lists', element: <MyListsPage /> },
           { path: '/search', element: <SearchPage /> },
           { path: '/upload', element: <UploadPage /> },
+          { path: '/verify-email', element: <VerifyEmailPage /> },
         ],
       },
     ],

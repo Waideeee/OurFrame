@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Camera, Pencil, Trash2 } from 'lucide-react';
 import { useMemories, useProfile } from '@/app/providers';
 import { Button, Input } from '@/components/ui';
+import { uploadFile } from '@/lib/upload';
 
 
 
@@ -17,6 +18,8 @@ export function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState(activeProfile?.avatarUrl ?? '');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
 
   
   const stats = useMemo(() => {
@@ -49,11 +52,18 @@ export function ProfilePage() {
     );
   }
 
-  const handleAvatar = (file: File | undefined) => {
-    if (!file) return;
-    setAvatarUrl(URL.createObjectURL(file));
-  };
-
+  const handleAvatar = async (file: File | undefined) => {
+  if (!file) return;
+  try {
+    setIsUploadingAvatar(true);
+    const url = await uploadFile(file);
+    setAvatarUrl(url);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to upload photo');
+  } finally {
+    setIsUploadingAvatar(false);
+  }
+};
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -92,7 +102,7 @@ export function ProfilePage() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="group relative h-32 w-32 overflow-hidden rounded-full border-2 border-transparent bg-surface-high transition-colors hover:border-on-surface"
+              className="group relative h-32 w-32 overflow-hidden rounded-full border-2 border-transparent bg-surface-high transition-colors hover:border-on-surface disabled:cursor-not-allowed disabled:opacity-70"
               aria-label="Change profile photo"
             >
               {avatarUrl ? (
@@ -103,9 +113,11 @@ export function ProfilePage() {
                 </span>
               )}
               <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera size={26} className="text-on-surface" />
-                <span className="text-label-sm text-on-surface">Change</span>
+              <Camera size={26} className="text-on-surface" />
+              <span className="text-label-sm text-on-surface">
+                {isUploadingAvatar ? 'Uploading...' : 'Change'}
               </span>
+            </span>
             </button>
             <input
               ref={fileRef}
@@ -135,8 +147,18 @@ export function ProfilePage() {
             )}
           </div>
 
-           <Button type="submit" variant="brand" size="lg" fullWidth className="mt-6" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          <Button
+            type="submit"
+            variant="brand"
+            size="lg"
+            fullWidth
+            disabled={isSubmitting || isUploadingAvatar}
+          >
+            {isSubmitting
+              ? 'Saving...'
+              : isUploadingAvatar
+                ? 'Uploading Photo...'
+                : 'Save'}
           </Button>
           {error && <p className="mt-3 text-center text-sm text-red-500">{error}</p>}
 

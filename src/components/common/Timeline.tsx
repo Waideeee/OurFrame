@@ -29,7 +29,7 @@ function TimelineItem({
       className="group flex w-full gap-4 text-left"
     >
       <img
-        src={memory.imageUrl}
+        src={memory.mediaUrl}
         alt={memory.title}
         loading="lazy"
         className={`shrink-0 rounded-card object-cover transition-transform group-hover:scale-[1.02] ${
@@ -81,7 +81,7 @@ export function Timeline({ groups, onSelect }: TimelineProps) {
               className="absolute left-[5px] top-2 h-[calc(100%-1rem)] w-px bg-outline-variant/50"
             />
             {group.memories.map((memory, idx) => (
-              <div key={memory.id} className="relative">
+              <div key={memory.memoryId} className="relative">
                 <span
                   aria-hidden
                   className="absolute -left-6 top-2 h-3 w-3 rounded-full border-2 border-primary bg-background"

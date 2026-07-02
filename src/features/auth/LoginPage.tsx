@@ -34,7 +34,12 @@ export function LoginPage() {
 
     } catch (err) {
 
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      if (msg.includes('verify your email')) {
+        navigate('/verify-email', { state: { email } });
+      } else {
+        setError(msg);
+      }
       
     }finally{
 

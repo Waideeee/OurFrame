@@ -50,11 +50,11 @@ export type Mood =
   | 'Lovely';
 
 export interface Memory {
-  id: string;
+  memoryId: string;
   title: string;
   description: string;
   /** 16:9 landscape image used for cards and hero banners. */
-  imageUrl: string;
+  mediaUrl: string;
   type: MediaType;
   category: MemoryCategory;
   mood?: Mood;
@@ -74,10 +74,12 @@ export interface Memory {
   archived?: boolean;
   /** "Add to Collection" toggle in the detail modal. */
   inCollection?: boolean;
+   inList?: boolean;
   /** Profile name credited with adding the memory. */
   uploadedBy?: string;
   /** Multiple media files attached to a single memory (episode-style list). */
   mediaItems?: MediaItem[];
+ 
 }
 
 export interface Collection {

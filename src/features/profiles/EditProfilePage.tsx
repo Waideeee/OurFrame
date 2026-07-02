@@ -4,6 +4,7 @@ import { Camera, Trash2 } from 'lucide-react';
 import { useProfile } from '@/app/providers';
 import { Button, Input } from '@/components/ui';
 import { Logo } from '@/components/layout';
+import { uploadFile } from '@/lib/upload';
 
 export function EditProfilePage() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ export function EditProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? '');
    const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
 
   if (!profile) {
     return (
@@ -31,10 +34,19 @@ export function EditProfilePage() {
     );
   }
 
-  const handleAvatar = (file: File | undefined) => {
-    if (!file) return;
-    setAvatarUrl(URL.createObjectURL(file));
-  };
+  const handleAvatar = async (file: File | undefined) => {
+  if (!file) return;
+  try {
+    setIsUploadingAvatar(true);
+    const url = await uploadFile(file);
+    console.log("Uploaded URL:", url);
+    setAvatarUrl(url);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to upload photo');
+  } finally {
+    setIsUploadingAvatar(false);
+  }
+};
 
    const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -76,8 +88,9 @@ export function EditProfilePage() {
             {/* Current avatar with change-image affordance */}
             <button
               type="button"
+              disabled={isUploadingAvatar}
               onClick={() => fileRef.current?.click()}
-              className="group relative h-36 w-36 overflow-hidden rounded-avatar border-2 border-transparent bg-surface transition-colors hover:border-on-surface"
+              className="group relative h-36 w-36 overflow-hidden rounded-avatar border-2 border-transparent bg-surface transition-colors hover:border-on-surface disabled:cursor-not-allowed disabled:opacity-70"
               aria-label="Change profile photo"
             >
               {avatarUrl ? (
@@ -88,9 +101,11 @@ export function EditProfilePage() {
                 </span>
               )}
               <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera size={26} className="text-on-surface" />
-                <span className="text-label-sm text-on-surface">Change</span>
+              <Camera size={26} className="text-on-surface" />
+              <span className="text-label-sm text-on-surface">
+                {isUploadingAvatar ? 'Uploading...' : 'Change'}
               </span>
+            </span>
             </button>
             <input
               ref={fileRef}
@@ -111,8 +126,18 @@ export function EditProfilePage() {
 
             <div className="flex w-full flex-col gap-3">
               {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-              <Button type="submit" variant="brand" size="lg" fullWidth disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save'}
+              <Button
+                type="submit"
+                variant="brand"
+                size="lg"
+                fullWidth
+                disabled={isSubmitting || isUploadingAvatar}
+              >
+                {isSubmitting
+                  ? 'Saving...'
+                  : isUploadingAvatar
+                    ? 'Uploading Photo...'
+                    : 'Save'}
               </Button>
               <button
                 type="button"

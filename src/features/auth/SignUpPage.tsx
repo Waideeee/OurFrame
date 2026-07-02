@@ -4,11 +4,13 @@ import { AuthLayout } from '@/components/layout';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/app/providers';
 
+
 export function SignUpPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,7 +40,7 @@ export function SignUpPage() {
         confirmPassword,
         anniversaryDate,
       });
-      navigate('/profiles');
+      navigate('/verify-email', { state: { email } });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

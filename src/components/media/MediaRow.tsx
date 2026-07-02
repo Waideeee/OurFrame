@@ -59,7 +59,7 @@ export function MediaRow({ title, memories, showProgress, onViewAll, onSelect }:
         >
           {memories.map((memory) => (
             <MemoryCard
-              key={memory.id}
+              key={memory.memoryId}
               memory={memory}
               showProgress={showProgress}
               onSelect={onSelect}

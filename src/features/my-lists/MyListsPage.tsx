@@ -1,11 +1,9 @@
 import { Archive, Heart, ListPlus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Memory } from '@/types';
-import { collections } from '@/data';
 import { useMemories } from '@/app/providers';
-import { MediaRow, FeaturedGrid } from '@/components/media';
+import { MediaRow } from '@/components/media';
 
-/** Wraps a personal list so empty lists still show their heading + a hint. */
 function ListSection({
   title,
   icon,
@@ -38,22 +36,10 @@ function ListSection({
 export function MyListsPage() {
   const { memories, openMemory } = useMemories();
 
-  const myList = memories.filter((m) => m.inCollection);
+  const myList = memories.filter((m) => m.inList);
   const loved = memories.filter((m) => m.liked);
   const archived = memories.filter((m) => m.archived);
-
-  // Map the curated collections into the Memory shape the grid expects so a tap
-  // opens them in the same detail modal as everything else.
-  const collectionTiles: Memory[] = collections.map((c) => ({
-    id: c.id,
-    title: c.title,
-    description: c.description,
-    imageUrl: c.coverUrl,
-    type: 'collection' as const,
-    category: c.category,
-    date: `${c.year ?? '2024'}-01-01`,
-    hearts: 5,
-  }));
+  const ourCollection = memories.filter((m) => m.inCollection);
 
   return (
     <div className="pb-24 pt-24">
@@ -70,7 +56,7 @@ export function MyListsPage() {
           title="My List"
           icon={<ListPlus size={18} className="text-primary-accent" />}
           memories={myList}
-          emptyHint="Open any memory and tap ＋ Add to Collection to start your list."
+          emptyHint="Open any memory and tap ＋ Add to List to start your list."
           onSelect={openMemory}
         />
 
@@ -90,7 +76,13 @@ export function MyListsPage() {
           onSelect={openMemory}
         />
 
-        <FeaturedGrid title="All Collections" memories={collectionTiles} onSelect={openMemory} />
+        <ListSection
+          title="All Collections"
+          icon={<ListPlus size={18} className="text-primary-accent" />}
+          memories={ourCollection}
+          emptyHint="Open any memory and tap ＋ Add to Collection to start your shared collection."
+          onSelect={openMemory}
+        />
       </div>
     </div>
   );

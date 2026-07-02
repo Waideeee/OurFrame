@@ -10,7 +10,7 @@ import { apiFetch } from '@/lib/api';
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
 
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   
 
@@ -55,14 +55,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
       setProfiles(withAddTile);
 
-      setActiveProfileState((prev) => prev ?? mapped[0] ?? null);
+      setActiveProfileState(mapped[0] ?? null);
     } catch (err) {
       console.error('Failed to load profiles:', err);
     }
   };
 
   loadProfiles();
-}, [isAuthenticated]);
+}, [user?.userId, isAuthenticated]);
 
   const addProfile = useCallback(async (data: { name: string; avatarUrl: string }): Promise<Profile> => {
   const created = await apiFetch<{ profileId: string; name: string; avatarUrl: string | null; kind: 'owner' | 'partner' | 'shared' }>('/profiles', {

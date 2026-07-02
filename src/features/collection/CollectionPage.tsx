@@ -15,10 +15,10 @@ export function CollectionPage() {
   const highlights = collections
     .filter((c) => (filter ? c.category === filter : true))
     .map((c) => ({
-      id: c.id,
+      memoryId: c.id,
       title: c.title,
       description: c.description,
-      imageUrl: c.coverUrl,
+      mediaUrl: c.coverUrl,
       type: 'collection' as const,
       category: c.category,
       date: `${c.year ?? '2024'}-01-01`,

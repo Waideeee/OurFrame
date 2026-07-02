@@ -4,11 +4,13 @@ import type { Memory } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { Badge, Button } from '@/components/ui';
 import type { ReactNode } from 'react';
+import {CircleAction } from '@/components/ui/CircleAction';
 
 interface HeroAction {
   label: string;
   icon?: ReactNode;
-  variant?: 'primary' | 'secondary' | 'icon';
+  variant?: 'primary' | 'secondary' | 'icon'| 'circle';
+   active?: boolean;
   onClick?: () => void;
   ariaLabel?: string;
   className?: string;
@@ -49,7 +51,7 @@ export function HeroBanner({
   return (
     <section className="relative h-[72vh] min-h-[520px] w-full overflow-hidden">
       <img
-        src={memory.imageUrl}
+        src={memory.mediaUrl}
         alt={memory.title}
         className="absolute inset-0 h-full w-full object-cover"
       />
@@ -81,22 +83,37 @@ export function HeroBanner({
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            {resolvedActions.map((action, i) => {
-              const isIconAction = (action.variant ?? 'primary') === 'icon';
+           {resolvedActions.map((action, i) => {
+            const variant = action.variant ?? 'primary';
+            const isIconAction = variant === 'icon';
+
+            if (variant === 'circle') {
               return (
-                <Button
+                <CircleAction
                   key={`${action.label}-${i}`}
-                  variant={action.variant ?? 'primary'}
-                  size="lg"
-                  leadingIcon={isIconAction ? undefined : action.icon}
+                  active={action.active}
+                  label={action.label}
                   onClick={action.onClick}
-                  aria-label={action.ariaLabel ?? action.label}
-                  className={action.className}
                 >
-                  {isIconAction ? action.icon : action.label}
-                </Button>
+                  {action.icon}
+                </CircleAction>
               );
-            })}
+            }
+
+            return (
+              <Button
+                key={`${action.label}-${i}`}
+                variant={variant}
+                size="lg"
+                leadingIcon={isIconAction ? undefined : action.icon}
+                onClick={action.onClick}
+                aria-label={action.ariaLabel ?? action.label}
+                className={action.className}
+              >
+                {isIconAction ? action.icon : action.label}
+              </Button>
+            );
+          })}
           </div>
         </motion.div>
       </div>

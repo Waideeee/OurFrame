@@ -11,6 +11,7 @@ import {
   Pencil,
   Play,
   Plus,
+  ListPlus,
   Trash2,
   X,
 } from 'lucide-react';
@@ -19,37 +20,10 @@ import { useMemories } from '@/app/providers/memory-context';
 import { useProfile } from '@/app/providers/profile-context';
 import { cn, detectMediaType, formatDate, formatDuration } from '@/lib/utils';
 import { Badge, Button } from '@/components/ui';
+import { CircleAction } from '@/components/ui/CircleAction';
 
 /** A circular, outlined Netflix-style action button. */
-function CircleAction({
-  active = false,
-  label,
-  onClick,
-  children,
-}: {
-  active?: boolean;
-  label: string;
-  onClick?: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-pressed={active}
-      title={label}
-      className={cn(
-        'flex h-11 w-11 items-center justify-center rounded-full border transition-colors duration-200',
-        active
-          ? 'border-primary bg-primary text-white'
-          : 'border-white/40 bg-black/40 text-on-surface hover:border-white hover:bg-white/10',
-      )}
-    >
-      {children}
-    </button>
-  );
-}
+
 
 /** Episode-style row for memories with multiple media files. */
 function MediaEpisode({
@@ -94,6 +68,7 @@ export function MemoryDetailModal() {
     closeMemory,
     toggleLike,
     toggleCollection,
+    toggleList,
     toggleArchive,
     deleteMemory,
   } = useMemories();
@@ -106,7 +81,7 @@ export function MemoryDetailModal() {
   // Prefer the live copy from the store so toggles reflect immediately, but
   // fall back to the passed object (e.g. synthetic collection tiles).
   const memory: Memory | null = activeMemory
-    ? getMemory(activeMemory.id) ?? activeMemory
+    ? getMemory(activeMemory.memoryId) ?? activeMemory
     : null;
 
   // Lock background scroll and wire Escape-to-close while the modal is open.
@@ -136,14 +111,14 @@ export function MemoryDetailModal() {
   const hasMediaItems = (memory?.mediaItems?.length ?? 0) > 0;
   const uploader = memory?.uploadedBy ?? activeProfile?.name ?? 'You';
   // Edit/delete only apply to real, stored memories (not synthetic collection tiles).
-  const isStored = !!(activeMemory && getMemory(activeMemory.id));
+  const isStored = !!(activeMemory && getMemory(activeMemory.memoryId));
 
   const openFull = (target: MediaItem | 'main') => setFullView(target);
 
   const handleEdit = () => {
     if (!memory) return;
     closeMemory();
-    navigate(`/memories/edit/${memory.id}`);
+    navigate(`/memories/edit/${memory.memoryId}`);
   };
 
   const handleDelete = () => {
@@ -151,13 +126,13 @@ export function MemoryDetailModal() {
     // Close the modal first and defer the actual removal until the exit
     // animation finishes (see onExitComplete). Mutating the list while the
     // modal is still animating out orphans its node, leaving a dead overlay.
-    setPendingDeleteId(memory.id);
+    setPendingDeleteId(memory.memoryId);
     closeMemory();
   };
 
   const handleExitComplete = () => {
     if (pendingDeleteId) {
-      deleteMemory(pendingDeleteId);
+      deleteMemory(pendingDeleteId).catch((err) => console.error('Failed to delete memory:', err));
       setPendingDeleteId(null);
     }
   };
@@ -198,7 +173,7 @@ export function MemoryDetailModal() {
             {/* Top media */}
             <div className="relative aspect-video w-full overflow-hidden bg-surface">
               <img
-                src={memory.imageUrl}
+                src={memory.mediaUrl}
                 alt={memory.title}
                 className="h-full w-full object-cover"
               />
@@ -228,15 +203,23 @@ export function MemoryDetailModal() {
                   <CircleAction
                     label={memory.liked ? 'Remove like' : 'Like'}
                     active={!!memory.liked}
-                    onClick={() => toggleLike(memory.id)}
+                    onClick={() => toggleLike(memory.memoryId).catch(console.error)}
                   >
                     <Heart size={18} className={memory.liked ? 'fill-white' : ''} />
                   </CircleAction>
 
                   <CircleAction
+                    label={memory.inList ? 'Remove from My List' : 'Add to My List'}
+                    active={!!memory.inList}
+                    onClick={() => toggleList(memory.memoryId).catch(console.error)}
+                  >
+                    {memory.inList ? <Check size={18} /> : <ListPlus size={18} />}
+                  </CircleAction>
+
+                  <CircleAction
                     label={memory.inCollection ? 'Remove from collection' : 'Add to collection'}
                     active={!!memory.inCollection}
-                    onClick={() => toggleCollection(memory.id)}
+                    onClick={() => toggleCollection(memory.memoryId).catch(console.error)}
                   >
                     {memory.inCollection ? <Check size={18} /> : <Plus size={18} />}
                   </CircleAction>
@@ -279,7 +262,7 @@ export function MemoryDetailModal() {
                     leadingIcon={
                       memory.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />
                     }
-                    onClick={() => toggleArchive(memory.id)}
+                    onClick={() => toggleArchive(memory.memoryId).catch(console.error)}
                     className={cn(
                       'aspect-auto rounded-card px-4 py-2 text-label-sm',
                     )}
@@ -385,10 +368,10 @@ export function MemoryDetailModal() {
                 </button>
                 {(() => {
                   const item = fullView === 'main' ? null : fullView;
-                  const url = item ? item.url : memory.imageUrl;
+                  const url = item ? item.url : memory.mediaUrl;
                   const playable = item
                     ? item.type === 'video'
-                    : isVideo && detectMediaType(memory.imageUrl) === 'video';
+                    : isVideo && detectMediaType(memory.mediaUrl) === 'video';
                   return playable ? (
                     <video
                       src={url}
