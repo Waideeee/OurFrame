@@ -1,53 +1,135 @@
 import { useMemo, useState } from 'react';
-import { SEARCH_FILTERS } from '@/lib/constants';
+
+import {
+  SEARCH_MEDIA_FILTERS,
+  GENRE_FILTERS,
+} from '@/lib/constants';
+
 import { useMemories } from '@/app/providers';
+
 import { SearchBar } from '@/components/common';
 import { CategoryChip } from '@/components/ui';
 import { MemoryCard } from '@/components/media';
 
-type SearchFilter = (typeof SEARCH_FILTERS)[number];
+import type { MemoryCategory } from '@/types';
+
+type MediaFilter =
+  (typeof SEARCH_MEDIA_FILTERS)[number];
 
 export function SearchPage() {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<SearchFilter>('All Time');
-  const { memories, openMemory } = useMemories();
+
+  const [mediaFilter, setMediaFilter] =
+    useState<MediaFilter>('All');
+
+  const [categoryFilter, setCategoryFilter] =
+    useState<MemoryCategory | null>(null);
+
+  const {
+    memories,
+    openMemory,
+  } = useMemories();
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return memories.filter((m) => {
+
+    return memories.filter((memory) => {
       const matchesQuery =
         q.length === 0 ||
-        m.title.toLowerCase().includes(q) ||
-        m.location?.toLowerCase().includes(q) ||
-        m.category.toLowerCase().includes(q);
+        memory.title.toLowerCase().includes(q) ||
+        memory.location
+          ?.toLowerCase()
+          .includes(q) ||
+        memory.category
+          .toLowerCase()
+          .includes(q);
 
-      const matchesFilter =
-        filter === 'All Time' ||
-        (filter === 'Photos' && m.type === 'photo') ||
-        (filter === 'Videos' && m.type === 'video') ||
-        (filter === 'Travel' && m.category === 'Travel') ||
-        (filter === 'Date Nights' && m.category === 'Dates') ||
-        (filter === 'Anniversaries' && m.category === 'Anniversaries');
+      const matchesMedia =
+        mediaFilter === 'All' ||
+        (mediaFilter === 'Photos' &&
+          memory.type === 'photo') ||
+        (mediaFilter === 'Videos' &&
+          memory.type === 'video');
 
-      return matchesQuery && matchesFilter;
+      const matchesCategory =
+        categoryFilter === null ||
+        memory.category === categoryFilter;
+
+      return (
+        matchesQuery &&
+        matchesMedia &&
+        matchesCategory
+      );
     });
-  }, [query, filter, memories]);
+  }, [
+    query,
+    mediaFilter,
+    categoryFilter,
+    memories,
+  ]);
 
   return (
     <div className="container-edge pb-24 pt-24">
-      <SearchBar value={query} onChange={setQuery} autoFocus className="mx-auto max-w-3xl" />
+      <SearchBar
+        value={query}
+        onChange={setQuery}
+        autoFocus
+        className="mx-auto max-w-3xl"
+      />
 
+      {/* Media Type */}
       <div className="mx-auto mt-5 flex max-w-3xl flex-wrap justify-center gap-2">
-        {SEARCH_FILTERS.map((f) => (
-          <CategoryChip key={f} active={filter === f} onClick={() => setFilter(f)}>
-            {f}
+        {SEARCH_MEDIA_FILTERS.map((filter) => (
+          <CategoryChip
+            key={filter}
+            active={mediaFilter === filter}
+            onClick={() =>
+              setMediaFilter(filter)
+            }
+          >
+            {filter}
+          </CategoryChip>
+        ))}
+      </div>
+
+      {/* Categories */}
+      <div className="mx-auto mt-3 flex max-w-3xl flex-wrap justify-center gap-2">
+        <CategoryChip
+          active={categoryFilter === null}
+          onClick={() =>
+            setCategoryFilter(null)
+          }
+        >
+          All Categories
+        </CategoryChip>
+
+        {GENRE_FILTERS.map((category) => (
+          <CategoryChip
+            key={category}
+            active={
+              categoryFilter === category
+            }
+            onClick={() =>
+              setCategoryFilter(
+                categoryFilter === category
+                  ? null
+                  : category,
+              )
+            }
+          >
+            {category}
           </CategoryChip>
         ))}
       </div>
 
       <h2 className="mb-5 mt-12 text-title-md text-on-surface">
-        {query ? `Results for "${query}"` : 'Results for your search'}
-        <span className="ml-2 text-label-sm text-metadata">{results.length} memories</span>
+        {query
+          ? `Results for "${query}"`
+          : 'Results for your search'}
+
+        <span className="ml-2 text-label-sm text-metadata">
+          {results.length} memories
+        </span>
       </h2>
 
       {results.length > 0 ? (
@@ -63,7 +145,8 @@ export function SearchPage() {
         </div>
       ) : (
         <p className="py-16 text-center text-body-md text-metadata">
-          No memories match your search yet. Try a different mood, place, or moment.
+          No memories match your search yet.
+          Try a different search or filter.
         </p>
       )}
     </div>

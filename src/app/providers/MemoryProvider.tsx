@@ -38,8 +38,18 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
           uploadedBy: getProfile(m.profileId)?.name,
         }));
         setMemories(mapped);
+        console.log("📦 Memories from API");
+          console.table(
+            mapped.map((m) => ({
+              title: m.title,
+              type: m.type,
+              category: m.category,
+            }))
+          );
       })
+      
       .catch((err) => console.error('Failed to load memories:', err));
+      
   }, [isAuthenticated, activeProfile, getProfile]);
 
   const toggleArchive = useCallback(async (id: string) => {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { apiFetch, TOKEN_KEY } from '@/lib/api';
 import { AuthContext, type AuthContextValue, type AuthUser, type LoginData, type RegisterData } from './auth-context';
-
+import { disconnectSocket } from '@/lib/socket';
 const USER_ID_KEY = 'ourframe_user_id';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    disconnectSocket();
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_ID_KEY)
     setUser(null)

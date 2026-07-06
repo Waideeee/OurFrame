@@ -1,121 +1,215 @@
-import { useCallback, useMemo, useState,useEffect, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { Profile } from '@/types';
-import { ProfileContext, type ProfileContextValue } from './profile-context';
-import { useAuth } from './auth-context'; 
+import {
+  ProfileContext,
+  type ProfileContextValue,
+} from './profile-context';
+import { useAuth } from './auth-context';
 import { apiFetch } from '@/lib/api';
 
+const ACTIVE_PROFILE_KEY = 'ourframe_active_profile';
 
-/** Stable-ish id without Date.now()/Math.random(). */
-
-
-export function ProfileProvider({ children }: { children: ReactNode }) {
-
+export function ProfileProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const { user, isAuthenticated } = useAuth();
 
-  
-
-
-
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfile, setActiveProfileState] =
-  useState<Profile | null>(null);
-
-  const [profiles, setProfiles] =
-  useState<Profile[]>([]);
+    useState<Profile | null>(null);
 
   useEffect(() => {
-  if (!isAuthenticated) return;
+    if (!isAuthenticated) return;
 
-  const loadProfiles = async () => {
-    try {
-      const data = await apiFetch<
-        {
-          profileId: string;
-          name: string;
-          avatarUrl: string | null;
-          kind: 'owner' | 'partner' | 'shared';
-        }[]
-      >('/profiles');
+    const loadProfiles = async () => {
+      try {
+        const data = await apiFetch<
+          {
+            profileId: string;
+            name: string;
+            avatarUrl: string | null;
+            kind: 'owner' | 'partner' | 'shared';
+          }[]
+        >('/profiles');
 
-      const mapped: Profile[] = data.map((p) => ({
-        profileId: p.profileId,
-        name: p.name,
-        avatarUrl: p.avatarUrl ?? '',
-        kind: p.kind,
-      }));
+        const mapped: Profile[] = data.map((profile) => ({
+          profileId: profile.profileId,
+          name: profile.name,
+          avatarUrl: profile.avatarUrl ?? '',
+          kind: profile.kind,
+        }));
 
-      const withAddTile: Profile[] = [
-        ...mapped,
-        {
-          profileId: 'add-tile',
-          name: 'Add Profile',
-          avatarUrl: '',
-          kind: 'add',
-        },
-      ];
+        setProfiles([
+          ...mapped,
+          {
+            profileId: 'add-tile',
+            name: 'Add Profile',
+            avatarUrl: '',
+            kind: 'add',
+          },
+        ]);
 
-      setProfiles(withAddTile);
+        const savedProfileId = localStorage.getItem(
+          ACTIVE_PROFILE_KEY,
+        );
 
-      setActiveProfileState(mapped[0] ?? null);
-    } catch (err) {
-      console.error('Failed to load profiles:', err);
-    }
-  };
+        const initialProfile =
+          mapped.find(
+            (profile) =>
+              profile.profileId === savedProfileId,
+          ) ??
+          mapped[0] ??
+          null;
 
-  loadProfiles();
-}, [user?.userId, isAuthenticated]);
+        setActiveProfileState(initialProfile);
+      } catch (err) {
+        console.error('Failed to load profiles:', err);
+      }
+    };
 
-  const addProfile = useCallback(async (data: { name: string; avatarUrl: string }): Promise<Profile> => {
-  const created = await apiFetch<{ profileId: string; name: string; avatarUrl: string | null; kind: 'owner' | 'partner' | 'shared' }>('/profiles', {
-    method: 'POST',
-    body: data,
-  });
+    loadProfiles();
+  }, [isAuthenticated, user?.userId]);
 
-  const profile: Profile = {
-    profileId: created.profileId,
-    name: created.name,
-    avatarUrl: created.avatarUrl ?? '',
-    kind: created.kind,
-  };
+  const setActiveProfile = useCallback(
+    (profile: Profile) => {
+      localStorage.setItem(
+        ACTIVE_PROFILE_KEY,
+        profile.profileId,
+      );
 
-  setProfiles((prev) => {
-    const addIndex = prev.findIndex((p) => p.kind === 'add');
-    if (addIndex === -1) return [...prev, profile];
-    return [...prev.slice(0, addIndex), profile, ...prev.slice(addIndex)];
-  });
+      setActiveProfileState(profile);
+    },
+    [],
+  );
 
-  return profile;
-}, []);
+  const clearActiveProfile = useCallback(() => {
+    localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    setActiveProfileState(null);
+  }, []);
 
-  const updateProfile = useCallback(async (id: string, patch: Partial<Profile>): Promise<void> => {
-  await apiFetch(`/profiles/${id}`, {
-    method: 'PUT',
-    body: patch,
-  });
+  const addProfile = useCallback(
+    async (data: {
+      name: string;
+      avatarUrl: string;
+    }): Promise<Profile> => {
+      const created = await apiFetch<{
+        profileId: string;
+        name: string;
+        avatarUrl: string | null;
+        kind: 'owner' | 'partner' | 'shared';
+      }>('/profiles', {
+        method: 'POST',
+        body: data,
+      });
 
-  setProfiles((prev) => prev.map((p) => (p.profileId === id ? { ...p, ...patch } : p)));
-  setActiveProfileState((prev) => (prev && prev.profileId === id ? { ...prev, ...patch } : prev));
-}, []);
+      const profile: Profile = {
+        profileId: created.profileId,
+        name: created.name,
+        avatarUrl: created.avatarUrl ?? '',
+        kind: created.kind,
+      };
 
-  const deleteProfile = useCallback(async (id: string): Promise<void> => {
-  await apiFetch(`/profiles/${id}`, { method: 'DELETE' });
+      setProfiles((prev) => {
+        const addIndex = prev.findIndex(
+          (p) => p.kind === 'add',
+        );
 
-  setProfiles((prev) => prev.filter((p) => p.profileId !== id));
-  setActiveProfileState((prev) => (prev && prev.profileId === id ? null : prev));
-}, []);
+        if (addIndex === -1) return [...prev, profile];
+
+        return [
+          ...prev.slice(0, addIndex),
+          profile,
+          ...prev.slice(addIndex),
+        ];
+      });
+
+      return profile;
+    },
+    [],
+  );
+
+  const updateProfile = useCallback(
+    async (
+      id: string,
+      patch: Partial<Profile>,
+    ) => {
+      await apiFetch(`/profiles/${id}`, {
+        method: 'PUT',
+        body: patch,
+      });
+
+      setProfiles((prev) =>
+        prev.map((profile) =>
+          profile.profileId === id
+            ? { ...profile, ...patch }
+            : profile,
+        ),
+      );
+
+      setActiveProfileState((prev) =>
+        prev?.profileId === id
+          ? { ...prev, ...patch }
+          : prev,
+      );
+    },
+    [],
+  );
+
+  const deleteProfile = useCallback(
+    async (id: string) => {
+      await apiFetch(`/profiles/${id}`, {
+        method: 'DELETE',
+      });
+
+      setProfiles((prev) =>
+        prev.filter((profile) => profile.profileId !== id),
+      );
+
+      setActiveProfileState((prev) =>
+        prev?.profileId === id
+          ? null
+          : prev,
+      );
+    },
+    [],
+  );
 
   const value = useMemo<ProfileContextValue>(
     () => ({
       activeProfile,
-      setActiveProfile: setActiveProfileState,
-      clearActiveProfile: () => setActiveProfileState(null),
+      setActiveProfile,
+      clearActiveProfile,
       profiles,
-      getProfile: (id) => profiles.find((p) => p.profileId === id),
+      getProfile: (id) =>
+        profiles.find(
+          (profile) => profile.profileId === id,
+        ),
       addProfile,
       updateProfile,
       deleteProfile,
     }),
-    [activeProfile, profiles, addProfile, updateProfile, deleteProfile],
+    [
+      activeProfile,
+      profiles,
+      setActiveProfile,
+      clearActiveProfile,
+      addProfile,
+      updateProfile,
+      deleteProfile,
+    ],
   );
 
-  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
+  return (
+    <ProfileContext.Provider value={value}>
+      {children}
+    </ProfileContext.Provider>
+  );
 }

@@ -1,115 +1,95 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState,useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, LogOut, Menu, Search, Settings, User, Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAV_LINKS } from '@/lib/constants';
 import { useScrollPosition } from '@/hooks';
-import { useMemories, useProfile } from '@/app/providers';
+import { useProfile } from '@/app/providers';
 import { Logo } from './Logo';
-
-const RELATIONSHIP_START_DATE_KEY = 'ourframe:relationshipStartDate';
-const ANNIVERSARY_NOTIFICATION_DATE_KEY = 'ourframe:lastAnniversaryNotificationDate';
-
-const getLocalDateKey = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
+import { fetchNotifications, markNotificationRead, markAllNotificationsRead, type Notification } from '@/lib/notifications';
+import { getSocket } from '@/lib/socket';
+import relativeTime from "dayjs/plugin/relativeTime";
+import dayjs from "dayjs";
+dayjs.extend(relativeTime);
 export function Navbar() {
   const { isScrolled } = useScrollPosition(24);
   const { activeProfile, clearActiveProfile } = useProfile();
-  const { getMemory, openMemory } = useMemories();
+  
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 'partner-memory',
-      text: 'Partner added a new memory',
-      timestamp: '2m ago',
-      thumbnail: 'https://picsum.photos/seed/ourframe-notification-memory/80/80',
-      path: '/recently-added',
-      memoryId: 'm-sunset',
-      unread: true,
-    },
-    {
-      id: 'memory-hearted',
-      text: 'A memory was hearted',
-      timestamp: '18m ago',
-      thumbnail: 'https://picsum.photos/seed/ourframe-notification-heart/80/80',
-      path: '/my-lists',
-      memoryId: 'm-first-date',
-      unread: true,
-    },
-    {
-      id: 'collection-memory',
-      text: 'A memory was added to Our Collection',
-      timestamp: '1h ago',
-      thumbnail: 'https://picsum.photos/seed/ourframe-notification-collection/80/80',
-      path: '/my-lists',
-      memoryId: 'm-monthsary-1',
-      unread: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const unreadNotificationCount = notifications.filter((notification) => notification.unread).length;
-  const notificationBadgeText = unreadNotificationCount >= 3 ? '3+' : String(unreadNotificationCount);
+ const unreadNotificationCount = useMemo(
+    () => notifications.filter(n => !n.isRead).length,
+    [notifications]
+);
+  const notificationBadgeText = unreadNotificationCount >= 99 ? '99+' : String(unreadNotificationCount);
+
+  
 
   useEffect(() => {
-    let relationshipStartDate = '';
-    let lastAnniversaryNotificationDate = '';
-    try {
-      relationshipStartDate = localStorage.getItem(RELATIONSHIP_START_DATE_KEY) ?? '';
-      lastAnniversaryNotificationDate = localStorage.getItem(ANNIVERSARY_NOTIFICATION_DATE_KEY) ?? '';
-    } catch {
-      relationshipStartDate = '';
-      lastAnniversaryNotificationDate = '';
-    }
-    if (!relationshipStartDate) return;
+  if (!activeProfile) return;
+  fetchNotifications(activeProfile.profileId)
+    .then(setNotifications)
+    .catch(console.error);
+}, [activeProfile]);
 
-    const startDate = new Date(`${relationshipStartDate}T00:00:00`);
-    if (Number.isNaN(startDate.getTime())) return;
+useEffect(() => {
+    const socket = getSocket();
 
-    const today = new Date();
-    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    let nextAnniversary = new Date(todayDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-    if (nextAnniversary < todayDate) {
-      nextAnniversary = new Date(todayDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
-    }
+    if (!socket || !activeProfile) return;
 
-    const daysUntilAnniversary = Math.round(
-      (nextAnniversary.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24),
-    );
-    if (daysUntilAnniversary < 0 || daysUntilAnniversary > 7) return;
+    socket.emit('joinProfile', activeProfile.profileId);
 
-    const todayKey = getLocalDateKey(todayDate);
-    if (lastAnniversaryNotificationDate === todayKey) return;
+    return () => {
+        socket.emit('leaveProfile', activeProfile.profileId);
+    };
+}, [activeProfile]);
 
-    const text =
-      daysUntilAnniversary === 0
-        ? 'Today is your anniversary!'
-        : `${daysUntilAnniversary} ${daysUntilAnniversary === 1 ? 'day' : 'days'} until your anniversary`;
+useEffect(() => {
+    const socket = getSocket();
 
-    setNotifications((items) => [
-      {
-        id: `anniversary-countdown-${todayKey}`,
-        text,
-        timestamp: 'Today',
-        thumbnail: 'https://picsum.photos/seed/ourframe-notification-anniversary/80/80',
-        path: '/',
-        memoryId: '',
-        unread: true,
-      },
-      ...items,
-    ]);
+    if (!socket) return;
+
+    const handleNewNotification = (notification: Notification) => {
+
+    setNotifications(prev => {
+        if (prev.some(n => n.id === notification.id)) {
+            return prev;
+        }
+
+        return [notification, ...prev];
+    });
+};
+
+    socket.on('newNotification', handleNewNotification);
+
+    return () => {
+        socket.off('newNotification', handleNewNotification);
+    };
+}, []);
+
+const handleMarkAllRead = async () => {
+    if (!activeProfile) return;
 
     try {
-      localStorage.setItem(ANNIVERSARY_NOTIFICATION_DATE_KEY, todayKey);
-    } catch {
-      /* storage unavailable — notification remains for this session */
+        await markAllNotificationsRead(activeProfile.profileId);
+
+        setNotifications(prev =>
+            prev.map(n => ({
+                ...n,
+                isRead: true
+            }))
+        );
+    } catch (err) {
+        console.error(err);
     }
-  }, []);
+}
+
 
   useEffect(() => {
     if (!notificationOpen) return;
@@ -161,15 +141,49 @@ export function Navbar() {
     navigate('/login');
   };
 
-  const handleNotificationClick = (notification: (typeof notifications)[number]) => {
-    const memory = getMemory(notification.memoryId);
-    setNotificationOpen(false);
-    setNotifications((items) =>
-      items.map((item) => (item.id === notification.id ? { ...item, unread: false } : item)),
-    );
-    navigate(notification.path);
-    if (memory) openMemory(memory);
-  };
+const handleNotificationClick = async (notification: Notification) => {
+  if (!notification.isRead) {
+    try {
+      await markNotificationRead(notification.id);
+
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notification.id
+            ? { ...n, isRead: true }
+            : n
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  setNotificationOpen(false);
+
+  switch (notification.type) {
+    case 'partner_added_memory':
+    case 'memory_hearted':
+      if (notification.memoryId) {
+        navigate(`/memory/${notification.memoryId}`);
+      }
+      break;
+
+    case 'memory_added_to_collection':
+      navigate('/my-list');
+      break;
+
+    case 'monthly_recap':
+      navigate('/recap');
+      break;
+
+    case 'milestone_reminder':
+      navigate('/');
+      break;
+
+    default:
+      break;
+  }
+};
 
   const profileMenuItems = [
     { label: 'Switch Profile', icon: Users, onClick: () => goTo('/profiles') },
@@ -182,6 +196,10 @@ export function Navbar() {
       'relative py-1 text-body-md transition-colors duration-200',
       isActive ? 'text-on-surface' : 'text-metadata hover:text-on-surface',
     );
+
+    
+    
+const formatNotificationDate = (date: string) => dayjs(date).fromNow();
 
   return (
     <header
@@ -255,17 +273,19 @@ export function Navbar() {
 
                   <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 pb-3">
                     <span className="text-body-md text-on-surface">Notifications</span>
-                    <button
-                      type="button"
-                      onClick={() => setNotifications((items) => items.map((item) => ({ ...item, unread: false })))}
-                      className="text-label-sm text-primary transition-colors hover:text-on-surface"
-                    >
-                      Mark all as read
-                    </button>
+                    {unreadNotificationCount > 0 && (
+                      <button
+                           type="button"
+                           onClick={handleMarkAllRead}
+                           className="text-label-sm text-primary transition-colors hover:text-on-surface"
+                      >
+                          Mark all as read
+                      </button>
+                  )}
                   </div>
 
                   {notifications.length > 0 ? (
-                    <div className="pt-1">
+                    <div className="max-h-96 overflow-y-auto pt-1">
                       {notifications.map((notification) => (
                         <button
                           key={notification.id}
@@ -275,22 +295,32 @@ export function Navbar() {
                           className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/10"
                         >
                           <img
-                            src={notification.thumbnail}
+                            src={notification.imageUrl ?? "Pictures\default-image-notif.png"}
                             alt=""
                             className="h-10 w-10 shrink-0 rounded-card object-cover"
                           />
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-body-md text-on-surface">{notification.text}</span>
-                            <span className="block text-label-sm text-metadata">{notification.timestamp}</span>
+                            <span className="block truncate text-body-md text-on-surface">{notification.message}</span>
+                            <span className="block text-label-sm text-metadata">{formatNotificationDate(notification.createdAt)}</span>
                           </span>
-                          {notification.unread ? (
+                          {!notification.isRead ? (
                             <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" aria-label="Unread" />
                           ) : null}
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <div className="px-4 py-6 text-center text-body-md text-metadata">You're all caught up</div>
+                    <div className="px-4 py-6 text-center text-body-md text-metadata"> 
+                    <Bell className="text-metadata" size={28} />
+
+                    <p className="text-body-md text-on-surface">
+                      You're all caught up
+                    </p>
+
+                    <p className="text-label-sm text-metadata">
+                      New notifications will appear here.
+                    </p>
+                    </div>
                   )}
                 </motion.div>
               ) : null}

@@ -1,77 +1,127 @@
-import { useState } from 'react';
-import type { MemoryCategory } from '@/types';
-import { GENRE_FILTERS } from '@/lib/constants';
+import { useMemo } from 'react';
+import { GENRE_FILTERS, HOME_ROWS } from '@/lib/constants';
 import { useMemories } from '@/app/providers';
-import { HeroBanner, MediaRow, FeaturedGrid } from '@/components/media';
+import { HeroBanner, MediaRow } from '@/components/media';
 import { CategoryChip } from '@/components/ui';
-import {Check, Info ,Play ,Plus ,} from 'lucide-react';
+import { Check, Info, Play, Plus } from 'lucide-react';
+import { useMemoryFilter } from '@/hooks/useMemoryFilter';
 
 export function HomePage() {
-  const [activeGenre, setActiveGenre] = useState<MemoryCategory | null>(null);
-  const { memoriesByCategory, recentMemories, memories, openMemory,toggleCollection } = useMemories();
-  
-  const hero = memories.find((m) => m.featured) ?? recentMemories[0];
-  const firstDate = memoriesByCategory('Dates');
-  const occasions = memoriesByCategory('Occasions');
-  const bigTrip = memoriesByCategory('Travel');
+  const {
+    memories,
+    recentMemories,
+    openMemory,
+    toggleCollection,
+  } = useMemories();
+
+  const {
+    filterMemories,
+    activeCategory,
+    setActiveCategory,
+} = useMemoryFilter(memories);
+
+  const hero =
+    memories.find((m) => m.featured) ??
+    recentMemories[0];
+
+  const rows = useMemo(() => {
+  return HOME_ROWS.map((row) => ({
+    ...row,
+    memories: filterMemories(
+      memories.filter((memory) =>
+        row.categories.includes(memory.category),
+      ),
+    ),
+  }));
+}, [memories, filterMemories]);
+
   
 
   return (
     <>
-     {hero ? (
-  <HeroBanner
-    memory={hero}
-    actions={[
-      {
-        label: 'Play',
-        icon: <Play size={18} className="fill-canvas" />,
-        variant: 'primary',
-        onClick: () => {
-          openMemory(hero);
-        },
-      },
-      {
-        label: hero.inCollection ? 'In Collection' : 'Collection',
-        icon: hero.inCollection ? <Check size={18} /> : <Plus size={18} />,
-        variant: 'secondary',
-        onClick: () => {
-          toggleCollection(hero.memoryId);
-        },
-      },
-      {
-        label: '',
-        icon: <Info size={18} />,
-        variant: 'icon',
-        ariaLabel: 'More information',
-        onClick: () => {
-          openMemory(hero);
-        },
-      },
-    ]}
-  />
-) : null}
+      {hero && (
+        <HeroBanner
+          memory={hero}
+          actions={[
+            {
+              label: 'Play',
+              icon: (
+                <Play
+                  size={18}
+                  className="fill-canvas"
+                />
+              ),
+              variant: 'primary',
+              onClick: () => openMemory(hero),
+            },
+            {
+              label: hero.inCollection
+                ? 'In Collection'
+                : 'Collection',
+              icon: hero.inCollection ? (
+                <Check size={18} />
+              ) : (
+                <Plus size={18} />
+              ),
+              variant: 'secondary',
+              onClick: () =>
+                toggleCollection(hero.memoryId),
+            },
+            {
+              label: '',
+              icon: <Info size={18} />,
+              variant: 'icon',
+              ariaLabel: 'More information',
+              onClick: () => openMemory(hero),
+            },
+          ]}
+        />
+      )}
 
       <div className="relative z-10 -mt-16 flex flex-col gap-row-gap pb-20">
-        <MediaRow title="First Date" memories={firstDate} onSelect={openMemory} />
-        <MediaRow title="1st Monthsary" memories={occasions} onSelect={openMemory} />
+        {rows.map((row) =>
+          row.memories.length > 0 ? (
+            <MediaRow
+              key={row.title}
+              title={row.title}
+              memories={row.memories}
+              onSelect={openMemory}
+            />
+          ) : null,
+        )}
 
-        <FeaturedGrid title="3rd Monthsary — Our Big Trip" memories={bigTrip} onSelect={openMemory} />
-
-        <MediaRow title="Occasions" memories={memoriesByCategory('Holidays')} onSelect={openMemory} />
-        <MediaRow title="Recently Added" memories={recentMemories} onSelect={openMemory} />
+        <MediaRow
+            title="Recently Added"
+            memories={filterMemories(recentMemories)}
+            onSelect={openMemory}
+        />
       </div>
 
-      {/* Floating GENRES filter bar near the bottom of the viewport. */}
       <div className="pointer-events-none sticky bottom-6 z-40 flex justify-center px-4">
         <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-black/80 px-3 py-2 backdrop-blur-md">
           <span className="px-2 text-label-sm font-semibold uppercase tracking-widest text-metadata">
             Genres
           </span>
+
+          {/* All */}
+          <CategoryChip
+            active={activeCategory === null}
+            onClick={() => setActiveCategory(null)}
+          >
+            All
+          </CategoryChip>
+
           {GENRE_FILTERS.map((genre) => (
             <CategoryChip
               key={genre}
-              active={activeGenre === genre}
-              onClick={() => setActiveGenre((g) => (g === genre ? null : genre))}
+              active={activeCategory === genre}
+              onClick={() =>
+                setActiveCategory(
+                  activeCategory === genre
+                    ? null
+                    : genre,
+                )
+              }
             >
               {genre}
             </CategoryChip>

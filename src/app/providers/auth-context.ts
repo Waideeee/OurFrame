@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react';
 
 export interface AuthUser {
-    userId: String
+    userId: String;
+    profileId?: String;
 }
 
 export interface RegisterData {
