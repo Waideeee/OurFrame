@@ -30,6 +30,7 @@ export const router = createBrowserRouter([
       {path: '/forgot-password', element: <ForgotPasswordPage/>},
       {path: '/verify-forgot-password', element: <VerifyForgotPasswordPage />},
       {path: '/new-password', element: <NewPasswordPage  />},
+      { path: '/verify-email', element: <VerifyEmailPage /> },
 
       // Content routes share the Navbar + Footer shell.
       {
@@ -53,7 +54,7 @@ export const router = createBrowserRouter([
           { path: '/my-lists', element: <MyListsPage /> },
           { path: '/search', element: <SearchPage /> },
           { path: '/upload', element: <UploadPage /> },
-          { path: '/verify-email', element: <VerifyEmailPage /> },
+          
         ],
       },
     ],

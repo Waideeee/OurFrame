@@ -42,7 +42,7 @@ const email = location.state?.email ?? '';
         onResend={handleResend}
         successTitle="Email Verified!"
         successDescription="Your email has been successfully confirmed."
-        onContinue={() => navigate('/profiles')}
+        onContinue={() => navigate('/login')}
     />
     </AuthLayout>
   );
