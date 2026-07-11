@@ -3,7 +3,7 @@ import { Heart, MapPin, Play, User } from 'lucide-react';
 import type { Memory } from '@/types';
 import { cn, formatDate, formatDuration } from '@/lib/utils';
 import { Badge } from '@/components/ui';
-
+import { getMemoryPreview } from '@/lib/getMemoryPreview';
 interface MemoryCardProps {
   memory: Memory;
   /** Fixed width helps horizontal rows keep a consistent rhythm. */
@@ -56,7 +56,7 @@ export function MemoryCard({ memory, className, showProgress = false, onSelect }
       aria-label={`${memory.title}${memory.location ? `, ${memory.location}` : ''}`}
     >
       <img
-        src={memory.mediaUrl}
+        src={getMemoryPreview(memory)}
         alt={memory.title}
         loading="lazy"
         className="h-full w-full object-cover"

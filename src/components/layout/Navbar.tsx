@@ -11,6 +11,7 @@ import { fetchNotifications, markNotificationRead, markAllNotificationsRead, typ
 import { getSocket } from '@/lib/socket';
 import relativeTime from "dayjs/plugin/relativeTime";
 import dayjs from "dayjs";
+import { useAuth } from '@/app/providers';
 dayjs.extend(relativeTime);
 export function Navbar() {
   const { isScrolled } = useScrollPosition(24);
@@ -29,7 +30,7 @@ export function Navbar() {
 );
   const notificationBadgeText = unreadNotificationCount >= 99 ? '99+' : String(unreadNotificationCount);
 
-  
+  const {logout} = useAuth();
 
   useEffect(() => {
   if (!activeProfile) return;
@@ -138,7 +139,11 @@ const handleMarkAllRead = async () => {
     // Clear the active profile (the closest thing to "logout" the app has) and
     // return to the sign-in screen.
     clearActiveProfile();
-    navigate('/login');
+
+    logout();
+    navigate('/login', {
+    replace: true,
+  });
   };
 
 const handleNotificationClick = async (notification: Notification) => {

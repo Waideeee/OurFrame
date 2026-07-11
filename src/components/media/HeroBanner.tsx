@@ -5,7 +5,7 @@ import { formatDate } from '@/lib/utils';
 import { Badge, Button } from '@/components/ui';
 import type { ReactNode } from 'react';
 import {CircleAction } from '@/components/ui/CircleAction';
-
+import { getMemoryPreview } from '@/lib/getMemoryPreview';
 interface HeroAction {
   label: string;
   icon?: ReactNode;
@@ -51,7 +51,7 @@ export function HeroBanner({
   return (
     <section className="relative h-[72vh] min-h-[520px] w-full overflow-hidden">
       <img
-        src={memory.mediaUrl}
+        src={getMemoryPreview(memory)}
         alt={memory.title}
         className="absolute inset-0 h-full w-full object-cover"
       />

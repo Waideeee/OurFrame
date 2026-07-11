@@ -51,10 +51,12 @@ export type Mood =
 
 export interface Memory {
   memoryId: string;
+  profileId: string;
   title: string;
   description: string;
   /** 16:9 landscape image used for cards and hero banners. */
   mediaUrl: string;
+  coverPhoto?: string;  
   type: MediaType;
   category: MemoryCategory;
   mood?: Mood;

@@ -2,8 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, KeyRound } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import {changePassword} from '@/lib/user';
 
-const PASSWORD_CHANGED_KEY = 'ourframe:account:passwordChangedAt';
+
 
 export function ChangePasswordPage() {
   const navigate = useNavigate();
@@ -13,10 +14,12 @@ export function ChangePasswordPage() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit =  async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (!current) {
       setError('Enter your current password.');
@@ -36,11 +39,22 @@ export function ChangePasswordPage() {
     }
 
     try {
-      localStorage.setItem(PASSWORD_CHANGED_KEY, new Date().toISOString());
-    } catch {
-      /* storage unavailable — still show success for this session */
-    }
-    setDone(true);
+  await changePassword({
+    currentPassword: current,
+    newPassword: next,
+    confirmPassword: confirm,
+  });
+
+  setDone(true);
+} catch (err) {
+  if (err instanceof Error) {
+    setError(err.message);
+  } else {
+    setError('Something went wrong.');
+  }
+}finally{
+  setLoading(false);
+}
   };
 
   return (
@@ -116,8 +130,8 @@ export function ChangePasswordPage() {
                 {error ? <p className="text-label-sm text-primary">{error}</p> : null}
 
                 <div className="mt-2 flex flex-col gap-3">
-                  <Button type="submit" variant="brand" size="lg" fullWidth>
-                    Save Changes
+                  <Button type="submit" variant="brand" size="lg" fullWidth disabled={loading}>
+                     {loading ? 'Saving...' : 'Save Changes'}
                   </Button>
                   <Link
                     to="/settings"

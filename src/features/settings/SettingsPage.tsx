@@ -5,7 +5,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -23,6 +23,19 @@ import {
 import { cn } from '@/lib/utils';
 import { applyTheme } from '@/lib/theme';
 import { useMemories, useProfile } from '@/app/providers';
+import {
+  NotificationSettings,
+  getNotificationSettings,
+  updateNotificationSettings,
+  PrivacySettings,
+  getPrivacySettings,
+  updatePrivacySettings,
+  StorageStats,
+  getStorageStats,
+  getUserInfo,
+  UserInfo,
+} from '@/lib/user';
+
 
 /* ---------------------------------------------------------------------------
    Persisted settings — every toggle / pill writes through to localStorage so
@@ -31,8 +44,6 @@ import { useMemories, useProfile } from '@/app/providers';
 --------------------------------------------------------------------------- */
 const SETTINGS_KEY = 'ourframe:settings';
 const CACHE_PREFIX = 'ourframe:cache:';
-const ACCOUNT_EMAIL_KEY = 'ourframe:account:email';
-const PASSWORD_CHANGED_KEY = 'ourframe:account:passwordChangedAt';
 
 type ThemeChoice = 'dark' | 'light' | 'system';
 type LanguageChoice = 'english' | 'filipino';
@@ -95,13 +106,7 @@ function loadSettings(): SettingsState {
   }
 }
 
-function readStored(key: string): string {
-  try {
-    return localStorage.getItem(key) ?? '';
-  } catch {
-    return '';
-  }
-}
+
 
 /* ---------------------------------------------------------------------------
    Theme-aware palette. Every value is a CSS custom property (declared in
@@ -306,15 +311,18 @@ function Row({
   );
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function Toggle({ checked, onChange, disabled = false}: { checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
       role="switch"
+      disabled={disabled}
+
       aria-checked={checked}
       onClick={onChange}
       style={{ backgroundColor: checked ? C.brand : C.toggleOff }}
-      className="relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200"
+      className="relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 disabled:cursor-not-allowed
+disabled:opacity-60"
     >
       <span
         style={{ transform: checked ? 'translateX(20px)' : 'translateX(0)' }}
@@ -403,6 +411,7 @@ function RoleBadge({ role }: { role: 'Owner' | 'Partner' | 'Shared' }) {
 --------------------------------------------------------------------------- */
 export function SettingsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { activeProfile, profiles, clearActiveProfile } = useProfile();
   const { memories } = useMemories();
 
@@ -413,9 +422,40 @@ export function SettingsPage() {
   const [legal, setLegal] = useState<'privacy' | 'terms' | null>(null);
 
   // Account login details may have been changed on the dedicated pages.
-  const [storedEmail] = useState(() => readStored(ACCOUNT_EMAIL_KEY));
-  const [pwChangedAt] = useState(() => readStored(PASSWORD_CHANGED_KEY));
 
+  const [notificationSettings, setNotificationSettings] =
+  useState<NotificationSettings | null>(null);
+
+  const [notificationLoading, setNotificationLoading] =
+  useState(true);
+
+  const [privacySettings, setPrivacySettings] =
+  useState<PrivacySettings | null>(null);
+
+const [privacyLoading, setPrivacyLoading] =
+  useState(true);
+
+  const [storageStats, setStorageStats] =
+  useState<StorageStats | null>(null);
+
+const [storageLoading, setStorageLoading] =
+  useState(true);
+
+const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+
+
+  const success =
+  (location.state as { success?: string })?.success;
+
+  useEffect(() => {
+  if (!success) return;
+
+  navigate(location.pathname, {
+    replace: true,
+    state: {},
+  });
+}, [success, navigate, location.pathname]);
   // Persist on every change.
   useEffect(() => {
     try {
@@ -429,6 +469,15 @@ export function SettingsPage() {
   useEffect(() => {
     applyTheme(settings.theme);
   }, [settings.theme]);
+
+  useEffect(() => {
+  if (!activeProfile) return;
+
+  loadNotificationSettings();
+  loadPrivacySettings();
+  loadStorageStats();
+  loadUserInfo();
+}, [activeProfile]);
 
   const set = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) =>
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -445,12 +494,11 @@ export function SettingsPage() {
     [realProfiles, activeProfile],
   );
 
-  const emailFor = (name: string) =>
-    `${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@ourframe.love`;
+  
 
-  const currentEmail = storedEmail || (activeProfile ? emailFor(activeProfile.name) : '—');
-  const passwordSub = pwChangedAt
-    ? `Last changed on ${new Date(pwChangedAt).toLocaleDateString(undefined, {
+  const currentEmail = userInfo?.email ?? '—';
+  const passwordSub = userInfo?.passwordChangedAt
+    ? `Last changed on ${new Date(userInfo.passwordChangedAt).toLocaleDateString(undefined, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -462,38 +510,8 @@ export function SettingsPage() {
     if (profileId === activeProfile?.profileId) return 'Owner';
     return 'Partner';
   };
-
-  const stats = useMemo(() => {
-    const photos = memories.filter((m) => m.type === 'photo').length;
-    const videos = memories.filter((m) => m.type === 'video').length;
-    const archived = memories.filter((m) => m.archived).length;
-    const earliest = memories.reduce<string>(
-      (acc, m) => (!acc || m.date < acc ? m.date : acc),
-      '',
-    );
-    // Rough per-item estimates so the storage figures track real media counts.
-    const photosGB = photos * 0.015;
-    const videosGB = videos * 0.35;
-    const usedGB = photosGB + videosGB;
-    return {
-      photos,
-      videos,
-      archived,
-      total: memories.length,
-      photosGB,
-      videosGB,
-      usedGB,
-      frameStarted: earliest
-        ? new Date(earliest).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-        : '—',
-    };
-  }, [memories]);
-
-  const TOTAL_GB = 10;
-  const usedGB = stats.usedGB > 0 ? stats.usedGB : 2.4;
-  const usedPct = Math.min(100, Math.round((usedGB / TOTAL_GB) * 100));
-  const gb = (n: number) => `${n.toFixed(1)} GB`;
-
+const bytesToGB = (bytes: number) =>
+  (bytes / 1024 / 1024 / 1024).toFixed(2);
   /* Actions */
   const handleSignOut = () => {
     clearActiveProfile();
@@ -533,8 +551,158 @@ export function SettingsPage() {
 
   const meta = SECTION_META[activeSection];
 
+  const archivedCount = useMemo(
+  () => memories.filter((m) => m.archived).length,
+  [memories],
+);
+
+const frameStarted = useMemo(() => {
+  const earliest = memories.reduce<string>(
+    (acc, m) => (!acc || m.date < acc ? m.date : acc),
+    '',
+  );
+
+  return earliest
+    ? new Date(earliest).toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric',
+      })
+    : '—';
+}, [memories]);
+
+
+
+  const loadNotificationSettings = async () => {
+  if (!activeProfile) return;
+
+  try {
+    setNotificationLoading(true);
+
+    const data = await getNotificationSettings(
+      activeProfile.profileId,
+    );
+
+    setNotificationSettings(data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setNotificationLoading(false);
+  }
+};
+
+const handleNotificationToggle = async (
+  key: keyof NotificationSettings,
+) => {
+  if (!notificationSettings || !activeProfile)
+    return;
+
+  const updated = {
+    ...notificationSettings,
+    [key]: !notificationSettings[key],
+  };
+
+  setNotificationSettings(updated);
+
+  try {
+    await updateNotificationSettings({
+      ...updated,
+      profileId: activeProfile.profileId,
+    });
+  } catch (err) {
+    console.error(err);
+
+    // rollback
+    setNotificationSettings(
+      notificationSettings,
+    );
+  }
+};
+
+const loadPrivacySettings = async () => {
+  if (!activeProfile) return;
+
+  try {
+    setPrivacyLoading(true);
+
+    const data = await getPrivacySettings(
+      activeProfile.profileId,
+    );
+
+    setPrivacySettings(data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setPrivacyLoading(false);
+  }
+};
+
+const handlePrivacyToggle = async (
+  key: keyof PrivacySettings,
+) => {
+  if (!privacySettings || !activeProfile)
+    return;
+
+  const updated = {
+    ...privacySettings,
+    [key]: !privacySettings[key],
+  };
+
+  setPrivacySettings(updated);
+
+  try {
+    await updatePrivacySettings({
+      ...updated,
+      profileId: activeProfile.profileId,
+    });
+  } catch (err) {
+    console.error(err);
+
+    setPrivacySettings(privacySettings);
+  }
+};
+
+const loadStorageStats = async () => {
+  try {
+    setStorageLoading(true);
+
+    const data = await getStorageStats();
+
+    setStorageStats(data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setStorageLoading(false);
+  }
+};
+
+const loadUserInfo = async () => {
+    try {
+        const data = await getUserInfo();
+        setUserInfo(data);
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+const storageUsed = storageStats
+  ? `${bytesToGB(storageStats.used)} GB`
+  : '--';
+
+const storageLimit = storageStats
+  ? `${bytesToGB(storageStats.limit)} GB`
+  : '--';
+
+const photosSize = storageStats
+  ? `${bytesToGB(storageStats.photos)} GB`
+  : '--';
+
+const videosSize = storageStats
+  ? `${bytesToGB(storageStats.videos)} GB`
+  : '--';
+
   return (
     <div style={{ backgroundColor: C.page }} className="min-h-screen">
+    
       <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-16 pt-24 md:flex-row">
         {/* Sidebar */}
         <aside className="w-full shrink-0 md:sticky md:top-24 md:w-[215px] md:self-start">
@@ -593,6 +761,13 @@ export function SettingsPage() {
             <p style={{ color: C.subtitle }} className="mt-1 text-[13px]">
               {meta.subtitle}
             </p>
+            {success && (
+            <div className="mb-6 rounded-card border border-green-500/30 bg-green-500/10 px-4 py-3">
+              <p className="text-body-md text-green-400">
+                ✓ {success}
+              </p>
+            </div>
+          )}
           </header>
 
           <div className="flex flex-col gap-5">
@@ -634,7 +809,7 @@ export function SettingsPage() {
                     <SettingsButton onClick={() => navigate('/profile')}>Change</SettingsButton>
                   </Row>
                   <Row label="Email address" sublabel={currentEmail}>
-                    <SettingsButton onClick={() => navigate('/settings/email')}>
+                    <SettingsButton onClick={() => navigate('/settings/change-email')}>
                       Change
                     </SettingsButton>
                   </Row>
@@ -742,12 +917,6 @@ export function SettingsPage() {
                       onChange={() => toggle('askPinOnSwitch')}
                     />
                   </Row>
-                  <Row
-                    label="Share my uploads with my partner"
-                    sublabel="Partner can see memories you added"
-                  >
-                    <Toggle checked={settings.shareUploads} onChange={() => toggle('shareUploads')} />
-                  </Row>
                 </Card>
               </>
             )}
@@ -756,21 +925,25 @@ export function SettingsPage() {
               <>
                 <Card header="Visibility">
                   <Row first label="Share my uploads with my partner">
-                    <Toggle checked={settings.shareUploads} onChange={() => toggle('shareUploads')} />
+                    <Toggle checked={ privacySettings?.shareWithPartner ?? true} 
+                    disabled={privacyLoading}
+                    onChange={() => handlePrivacyToggle('shareWithPartner')} />
                   </Row>
                   <Row
                     label="Show when I was last active"
                     sublabel="Let your partner see your activity status"
                   >
                     <Toggle
-                      checked={settings.showLastActive}
-                      onChange={() => toggle('showLastActive')}
+                      checked={privacySettings?.showLastActive ?? true}
+                      disabled={privacyLoading}
+                      onChange={() => handlePrivacyToggle('showLastActive')}
                     />
                   </Row>
                   <Row label="Show who hearted a memory">
                     <Toggle
-                      checked={settings.showWhoHearted}
-                      onChange={() => toggle('showWhoHearted')}
+                      checked={privacySettings?.showWhoHearted ?? true}
+                      disabled={privacyLoading}
+                      onChange={() => handlePrivacyToggle('showWhoHearted')}
                     />
                   </Row>
                 </Card>
@@ -782,8 +955,9 @@ export function SettingsPage() {
                     sublabel="Memories older than 2 years move to your archive"
                   >
                     <Toggle
-                      checked={settings.autoArchiveOld}
-                      onChange={() => toggle('autoArchiveOld')}
+                      checked={privacySettings?.autoArchiveOld ?? false}
+                      disabled={privacyLoading}
+                      onChange={() => handlePrivacyToggle('autoArchiveOld')}
                     />
                   </Row>
                   <Row
@@ -806,29 +980,41 @@ export function SettingsPage() {
                 <Card header="In-app alerts">
                   <Row first label="When your partner adds a memory">
                     <Toggle
-                      checked={settings.notifyPartnerAddedMemory}
-                      onChange={() => toggle('notifyPartnerAddedMemory')}
+                      checked={
+                        notificationSettings?.partnerAddsMemory ??
+                        true
+                      }
+                      disabled={notificationLoading}
+                      onChange={() =>
+                        handleNotificationToggle(
+                          'partnerAddsMemory',
+                        )
+                      }
                     />
                   </Row>
                   <Row label="When a memory gets a heart">
                     <Toggle
-                      checked={settings.notifyMemoryHearted}
-                      onChange={() => toggle('notifyMemoryHearted')}
+                      checked={ notificationSettings?.memoryGetsHeart ?? true}
+                      disabled={notificationLoading}
+                      onChange={() => handleNotificationToggle('memoryGetsHeart')}
                     />
                   </Row>
                   <Row
                     label="Monthly memory recap"
                     sublabel="A look back at what you two did this month"
                   >
-                    <Toggle checked={settings.monthlyRecap} onChange={() => toggle('monthlyRecap')} />
+                    <Toggle checked={notificationSettings?.monthlyRecap ?? true}
+                    disabled={notificationLoading}
+                     onChange={() => handleNotificationToggle('monthlyRecap')} />
                   </Row>
                   <Row
                     label="Monthsary & milestone reminders"
                     sublabel="Get reminded on your special dates"
                   >
                     <Toggle
-                      checked={settings.monthsaryReminders}
-                      onChange={() => toggle('monthsaryReminders')}
+                      checked={notificationSettings?.milestoneReminders ?? true}
+                      disabled={notificationLoading}
+                      onChange={() => handleNotificationToggle('milestoneReminders')}
                     />
                   </Row>
                 </Card>
@@ -840,14 +1026,16 @@ export function SettingsPage() {
                     sublabel="A short email of new memories each week"
                   >
                     <Toggle
-                      checked={settings.weeklyRecapEmail}
-                      onChange={() => toggle('weeklyRecapEmail')}
+                      checked={notificationSettings?.weeklyRecapEmail ?? false}
+                      disabled={notificationLoading}
+                      onChange={() => handleNotificationToggle  ('weeklyRecapEmail')}
                     />
                   </Row>
                   <Row label="Updates from OurFrame" sublabel="New features and improvements">
                     <Toggle
-                      checked={settings.updatesFromOurframe}
-                      onChange={() => toggle('updatesFromOurframe')}
+                      checked={notificationSettings?.ourframeUpdates ?? false}
+                      disabled={notificationLoading}
+                      onChange={() => handleNotificationToggle('ourframeUpdates')}
                     />
                   </Row>
                 </Card>
@@ -888,19 +1076,6 @@ export function SettingsPage() {
                     <Toggle checked={settings.showLocation} onChange={() => toggle('showLocation')} />
                   </Row>
                 </Card>
-
-                <Card header="Language">
-                  <Row first label="App language">
-                    <PillSelector<LanguageChoice>
-                      value={settings.language}
-                      onChange={(v) => set('language', v)}
-                      options={[
-                        { value: 'english', label: 'English' },
-                        { value: 'filipino', label: 'Filipino' },
-                      ]}
-                    />
-                  </Row>
-                </Card>
               </>
             )}
 
@@ -909,10 +1084,10 @@ export function SettingsPage() {
                 <Card header="Storage usage">
                   <div className="flex items-end justify-between">
                     <p style={{ color: C.strong }} className="text-[20px] font-semibold">
-                      {gb(usedGB)}
+                     {storageLoading ? 'Loading...' : storageUsed}
                     </p>
                     <p style={{ color: C.subtitle }} className="text-[13px]">
-                      of {TOTAL_GB} GB
+                      of {storageLoading ? 'Loading...' : storageLimit}
                     </p>
                   </div>
                   <div
@@ -920,16 +1095,20 @@ export function SettingsPage() {
                     className="mt-3 h-2 w-full overflow-hidden rounded-full"
                   >
                     <div
-                      style={{ width: `${usedPct}%`, backgroundColor: C.brand }}
+                      style={{width: `${
+                          storageLoading
+                            ? 0
+                            : storageStats?.percentage ?? 0
+                        }%`, backgroundColor: C.brand }}
                       className="h-full rounded-full transition-all"
                     />
                   </div>
                   <div className="mt-3 flex gap-6">
                     <p style={{ color: C.pillText }} className="text-[12px]">
-                      Photos — {gb(stats.photosGB)}
+                      Photos — {storageLoading ? 'Loading...' : photosSize}
                     </p>
                     <p style={{ color: C.pillText }} className="text-[12px]">
-                      Videos — {gb(stats.videosGB)}
+                      Videos — {storageLoading ? 'Loading...' : videosSize}
                     </p>
                   </div>
                 </Card>
@@ -960,8 +1139,8 @@ export function SettingsPage() {
                   <Row
                     first
                     label="View archived memories"
-                    sublabel={`${stats.archived} ${
-                      stats.archived === 1 ? 'memory' : 'memories'
+                    sublabel={`${archivedCount} ${
+                      archivedCount === 1 ? 'memory' : 'memories'
                     } tucked away in your archive`}
                   >
                     <SettingsButton onClick={() => navigate('/my-lists')}>
@@ -988,12 +1167,12 @@ export function SettingsPage() {
                   </Row>
                   <Row label="Memories stored">
                     <span style={{ color: C.pillText }} className="text-[13px]">
-                      {stats.total}
+                      {memories.length}
                     </span>
                   </Row>
                   <Row label="Frame started">
                     <span style={{ color: C.pillText }} className="text-[13px]">
-                      {stats.frameStarted}
+                      {frameStarted}
                     </span>
                   </Row>
                 </Card>

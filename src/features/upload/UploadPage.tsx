@@ -4,18 +4,21 @@ import type { MemoryCategory, Mood } from '@/types';
 import { UPLOAD_CATEGORIES, UPLOAD_MOODS } from '@/lib/constants';
 import { detectMediaType } from '@/lib/utils';
 import { useMemories} from '@/app/providers';
-import { uploadFile } from '@/lib/upload';
+
 import { Dropzone } from '@/components/common';
 import { MediaRow } from '@/components/media';
 import { Button, Input } from '@/components/ui';
-
+import { useUpload } from '@/hooks/useUpload';
+import { UploadOverlay } from '@/components/upload';
 interface PendingFile {
   id: string;
   name: string;
   url: string;
   type: 'photo' | 'video';
-  caption: string;
-  file: File;   // ← dagdag — kailangan para sa aktwal na upload
+  
+  file: File;
+  coverPhotoFile?: File;
+  coverPhotoUrl?: string;
 }
 
 export function UploadPage() {
@@ -30,7 +33,20 @@ export function UploadPage() {
   const [isFeatured, setIsFeatured] = useState(false);
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+
+  const {
+     uploadFile: upload,
+  progress,
+  isUploading,
+  reset,
+  setProgress,
+  setStatus,
+  status,
+  begin,
+  finish
+} = useUpload();
+  
+  
 
   const idCounter = useRef(0);
   const nextId = (prefix: string) => {
@@ -51,17 +67,37 @@ export function UploadPage() {
     setFiles(mapped);
   };
 
-  const setCaption = (id: string, caption: string) => {
-    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, caption } : f)));
-  };
-
+  const setCoverPhoto = (
+    id: string,
+    file: File,
+    ) => {
+        setFiles(prev =>
+            prev.map(item =>
+                item.id === id
+                    ? {
+                        ...item,
+                        coverPhotoFile: file,
+                        coverPhotoUrl: URL.createObjectURL(file),
+                      }
+                    : item
+            )
+        );
+    };
   const removeFile = (id: string) => {
-    setFiles((prev) => {
-      const target = prev.find((f) => f.id === id);
-      if (target) URL.revokeObjectURL(target.url);
-      return prev.filter((f) => f.id !== id);
-    });
-  };
+  setFiles(prev => {
+    const target = prev.find(f => f.id === id);
+
+    if (target) {
+      URL.revokeObjectURL(target.url);
+
+      if (target.coverPhotoUrl) {
+        URL.revokeObjectURL(target.coverPhotoUrl);
+      }
+    }
+
+    return prev.filter(f => f.id !== id);
+  });
+};
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -77,14 +113,48 @@ export function UploadPage() {
     }
 
     try {
-      setIsUploading(true);
+      
       const primaryFile = files[0];
-      const mediaUrl = await uploadFile(primaryFile.file);
+
+      let mediaUrl: string;
+      let coverPhoto: string | undefined;
+      begin();
+      if (primaryFile.type === 'video') {
+        setStatus('Uploading video...');
+
+        mediaUrl = await upload(
+          primaryFile.file,
+          0,
+          80
+        );
+
+        if (primaryFile.coverPhotoFile) {
+          setStatus('Uploading cover...');
+
+          coverPhoto = await upload(
+            primaryFile.coverPhotoFile,
+            80,
+            95
+          );
+        }
+      } else {
+        setStatus('Uploading photo...');
+
+        mediaUrl = await upload(
+          primaryFile.file,
+          0,
+          95
+        );
+      }
+
+      setStatus('Creating memory...');
+      setProgress(96);
 
       await addMemory({
         title: title.trim() || 'Untitled Memory',
         description: story.trim(),
         mediaUrl,
+        coverPhoto,
         type: primaryFile.type,
         category,
         mood: mood || undefined,
@@ -92,13 +162,40 @@ export function UploadPage() {
         location: location.trim() || undefined,
         featured: isFeatured,
       });
+      finish();
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      files.forEach(file => {
+        URL.revokeObjectURL(file.url);
+
+        if (file.coverPhotoUrl) {
+          URL.revokeObjectURL(file.coverPhotoUrl);
+        }
+      });
 
       setSubmitted(true);
       setFiles([]);
+      setTitle('');
+      setStory('');
+      setLocation('');
+      setMood('');
+      setCategory('');
+      setDate('');
+      setIsFeatured(false);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      reset();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload memory');
-    } finally {
-      setIsUploading(false);
+      setStatus('Upload failed');
+
+        await new Promise(resolve => setTimeout(resolve, 1200));
+
+        reset();
+
+        setError(
+            err instanceof Error
+                ? err.message
+                : 'Failed to upload memory'
+        );
     }
   };
 
@@ -116,48 +213,107 @@ export function UploadPage() {
         <div className="flex flex-col gap-4">
           <Dropzone onFiles={handleFiles} showList={false} />
 
-          {/* Per-file previews with optional captions. */}
+                    
           {files.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-label-sm font-medium text-metadata">
-                {files.length} file{files.length > 1 ? 's' : ''} attached
-              </p>
-              {files.map((file, index) => (
-                <div
-                  key={file.id}
-                  className="flex gap-3 rounded-card bg-surface-high p-3"
-                >
-                  <div className="relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-card bg-surface">
-                    <img src={file.url} alt={file.name} className="h-full w-full object-cover" />
-                    <span className="absolute left-1 top-1 rounded-sm bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-on-surface">
-                      {file.type}
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-label-sm text-on-surface">
-                        {file.type === 'video' ? 'Video' : 'Photo'} {index + 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(file.id)}
-                        aria-label={`Remove ${file.name}`}
-                        className="rounded-full p-1 text-metadata transition-colors hover:text-on-surface"
-                      >
-                        <X size={16} />
-                      </button>
+              <div className="flex flex-col gap-3">
+                <p className="text-label-sm font-medium text-metadata">
+                  {files.length} file{files.length > 1 ? 's' : ''} attached
+                </p>
+
+                {files.map((file, index) => (
+                  <div
+                    key={file.id}
+                    className="rounded-card bg-surface-high p-3"
+                  >
+                    <div className="flex gap-3">
+                      <div className="relative h-[68px] w-[120px] shrink-0 overflow-hidden rounded-card bg-surface">
+                        <img
+                          src={file.url}
+                          alt={file.name}
+                          className="h-full w-full object-cover"
+                        />
+
+                        <span className="absolute left-1 top-1 rounded-sm bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-on-surface">
+                          {file.type}
+                        </span>
+                      </div>
+
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <div className="flex items-center justify-between">
+                          <span className="truncate text-label-sm text-on-surface">
+                            {file.type === 'video'
+                              ? `Video ${index + 1}`
+                              : `Photo ${index + 1}`}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => removeFile(file.id)}
+                            className="rounded-full p-1 text-metadata transition-colors hover:text-on-surface"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+
+                        <p className="mt-1 text-xs text-metadata truncate">
+                          {file.name}
+                        </p>
+                      </div>
                     </div>
-                    <input
-                      value={file.caption}
-                      onChange={(e) => setCaption(file.id, e.target.value)}
-                      placeholder="Add a caption for this media (optional)"
-                      className="h-9 w-full rounded-card border border-transparent bg-surface px-3 text-label-sm text-on-surface placeholder:text-metadata/70 focus:border-outline focus:outline-none"
-                    />
+
+                    {file.type === 'video' && (
+                      <div className="mt-4 border-t border-outline/30 pt-4">
+                        <p className="mb-2 text-label-sm font-medium text-on-surface">
+                          Cover Photo
+                        </p>
+
+                        <div className="flex items-start gap-3">
+                          <div className="h-20 w-32 overflow-hidden rounded-card bg-surface">
+                            {file.coverPhotoUrl ? (
+                              <img
+                                src={file.coverPhotoUrl}
+                                alt="Cover Preview"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-center text-[11px] text-metadata">
+                                No Cover
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <label className="cursor-pointer">
+                              <span className="inline-flex h-10 items-center rounded-card bg-primary px-4 text-label-sm text-white transition hover:opacity-90">
+                                {file.coverPhotoUrl
+                                  ? 'Change Cover'
+                                  : 'Upload Cover'}
+                              </span>
+
+                              <input
+                                hidden
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const selected = e.target.files?.[0];
+                                  if (!selected) return;
+
+                                  setCoverPhoto(file.id, selected);
+                                }}
+                              />
+                            </label>
+
+                            <p className="text-xs text-metadata">
+                              Optional. Choose the thumbnail that appears before the video plays.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
+                ))}
+              </div>
+            ) : null}
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -284,9 +440,10 @@ export function UploadPage() {
           </label>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <Button type="submit" variant="brand" size="lg" leadingIcon={<UploadCloud size={18} />} disabled={isUploading}>
+          <Button type="submit" variant="brand" size="lg" leadingIcon={<UploadCloud size={18}/>}  disabled={isUploading} >
             {isUploading ? 'Uploading...' : 'Upload Memory'}
           </Button>
+          
 
           {submitted ? (
             <p className="rounded-card bg-primary/10 px-4 py-3 text-body-md text-primary-accent">
@@ -303,6 +460,13 @@ export function UploadPage() {
           onSelect={openMemory}
         />
       </div>
+            <UploadOverlay
+          open={isUploading}
+          progress={progress}
+          status= {status}
+      />
     </div>
+
+    
   );
 }

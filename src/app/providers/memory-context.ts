@@ -18,6 +18,7 @@ export interface MemoryContextValue {
     title: string;
     description: string;
     mediaUrl: string;
+    coverPhoto?: string;
     type: Memory['type'];
     category: Memory['category'];
     mood?: Memory['mood'];

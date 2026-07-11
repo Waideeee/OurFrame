@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Logo } from './Logo';
-import { img } from '@/data';
+// import { img } from '@/data';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -12,20 +12,20 @@ interface AuthLayoutProps {
 export function AuthLayout({ children, footer }: AuthLayoutProps) {
   return (
     <div className="relative flex min-h-screen flex-col">
-      <img
+      {/* <img
         src={img('auth-hero', 1920, 1080)}
         alt=""
         aria-hidden
         className="absolute inset-0 h-full w-full object-cover"
-      />
+      /> */}
       <div className="absolute inset-0 bg-black/70" />
 
       <header className="container-edge relative z-10 py-6">
         <Logo />
       </header>
 
-      <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md rounded-card bg-black/75 p-8 backdrop-blur-sm sm:p-12">
+      <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-8 bg-zinc-950">
+        <div className="w-full max-w-md rounded-card bg-[#1E1E1E]/75 p-8 backdrop-blur-sm sm:p-12">
           {children}
         </div>
       </main>

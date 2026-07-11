@@ -3,6 +3,7 @@ import { Heart, MapPin, User } from 'lucide-react';
 import type { TimelineGroup, Memory } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui';
+import { getMemoryPreview } from '@/lib/getMemoryPreview';
 
 interface TimelineProps {
   groups: TimelineGroup[];
@@ -29,7 +30,7 @@ function TimelineItem({
       className="group flex w-full gap-4 text-left"
     >
       <img
-        src={memory.mediaUrl}
+        src={getMemoryPreview(memory)}
         alt={memory.title}
         loading="lazy"
         className={`shrink-0 rounded-card object-cover transition-transform group-hover:scale-[1.02] ${

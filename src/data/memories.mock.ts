@@ -19,6 +19,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-sunset',
     title: 'Our First Sunset',
+    profileId: 'profile-1',
     description:
       'The evening we drove past the city limits, found an empty stretch of coast, and watched the sky turn the color of everything we hoped for.',
     mediaUrl: img('sunset', 1600, 900),
@@ -32,6 +33,7 @@ export const memories: Memory[] = [
   },
   {
     memoryId: 'm-first-date',
+    profileId: 'profile-1',
     title: 'The First Date',
     description: 'Coffee that turned into dinner that turned into a six-hour conversation.',
     mediaUrl: img('firstdate'),
@@ -44,6 +46,7 @@ export const memories: Memory[] = [
   },
   {
     memoryId: 'm-monthsary-1',
+    profileId: 'profile-1',
     title: '1st Monthsary',
     description: 'One month in and already collecting inside jokes.',
     mediaUrl: img('monthsary1'),
@@ -62,6 +65,7 @@ export const memories: Memory[] = [
   },
   {
     memoryId: 'm-monthsary-3',
+    profileId: 'profile-1',
     title: '3rd Monthsary — Our Big Trip',
     description: 'We celebrated three months by getting lost in a city neither of us had seen.',
     mediaUrl: img('bigtrip', 1600, 900),
@@ -77,6 +81,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-santorini',
     title: 'Summer in Santorini',
+    profileId: 'profile-1',
     description: 'White walls, blue domes, and a whole week with nowhere to be.',
     mediaUrl: img('santorini', 1600, 900),
     type: 'video',
@@ -92,6 +97,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-amalfi',
     title: 'The Amalfi Coast Getaway',
+    profileId: 'profile-1',
     description: 'Lemon groves, cliffside lunches, and the bluest water we have ever seen.',
     mediaUrl: img('amalfi', 1600, 900),
     type: 'photo',
@@ -105,6 +111,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-european-summer',
     title: 'European Summer',
+    profileId: 'profile-1',
     description: 'Three countries, one backpack each, endless gelato.',
     mediaUrl: img('eurosummer', 1600, 900),
     type: 'collection',
@@ -118,6 +125,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-dinner-rooftop',
     title: 'Rooftop Anniversary Dinner',
+    profileId: 'profile-1',
     description: 'String lights, a shared dessert, and a skyline that felt like ours.',
     mediaUrl: img('rooftop'),
     type: 'photo',
@@ -130,6 +138,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-pasta-night',
     title: 'Homemade Pasta Night',
+    profileId: 'profile-1',
     description: 'Flour everywhere, but the carbonara was worth it.',
     mediaUrl: img('pasta'),
     type: 'video',
@@ -144,6 +153,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-beach-day',
     title: 'A Lazy Beach Day',
+    profileId: 'profile-1',
     description: 'No plans, just waves and sandy sandwiches.',
     mediaUrl: img('beachday'),
     type: 'photo',
@@ -156,6 +166,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-snow-cabin',
     title: 'Snowed-In Cabin Weekend',
+    profileId: 'profile-1',
     description: 'A fireplace, two books, and absolutely nowhere to go.',
     mediaUrl: img('cabin'),
     type: 'video',
@@ -170,6 +181,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-farmers-market',
     title: 'Sunday Farmers Market',
+    profileId: 'profile-1',
     description: 'Our weekly ritual — fresh peaches and terrible singing in the car.',
     mediaUrl: img('market'),
     type: 'photo',
@@ -182,6 +194,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-picnic',
     title: 'Golden Hour Picnic',
+    profileId: 'profile-1',
     description: 'A blanket, a bottle, and the park to ourselves.',
     mediaUrl: img('picnic'),
     type: 'photo',
@@ -194,6 +207,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'firstmeet',
     title: 'The day we met',
+    profileId: 'profile-1',
     description: 'We met and we ate, walk and drink matcha afterall',
     mediaUrl: img('firstmeet', 1600, 900),
     type: 'video',
@@ -208,6 +222,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-anniversary-3',
     title: 'Third Anniversary',
+    profileId: 'profile-1',
     description: 'Same restaurant as the first date. Same order, too.',
     mediaUrl: img('anniv3'),
     type: 'photo',
@@ -220,6 +235,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-fireworks',
     title: 'New Year Fireworks',
+    profileId: 'profile-1',
     description: 'A countdown, a kiss, and a sky full of light.',
     mediaUrl: img('fireworks'),
     type: 'video',
@@ -233,6 +249,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-garden',
     title: 'Planting the Garden',
+    profileId: 'profile-1',
     description: 'We are not sure the tomatoes will survive us, but we tried.',
     mediaUrl: img('garden'),
     type: 'photo',
@@ -245,6 +262,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-night-drive',
     title: 'Movie Date ',
+    profileId: 'profile-1',
     description: 'We watched a movie named Final Destination and ate with her Sister',
     mediaUrl: img('nightdrive'),
     type: 'photo',
@@ -257,6 +275,7 @@ export const memories: Memory[] = [
   {
     memoryId: 'm-coffee-morning',
     title: 'Our 1st monthsary',
+    profileId: 'profile-1',
     description: 'A simple Celebration of our first month together',
     mediaUrl: img('coffee'),
     type: 'photo',

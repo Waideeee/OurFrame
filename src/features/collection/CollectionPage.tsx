@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { ListPlus, Play } from 'lucide-react';
 import type { MemoryCategory } from '@/types';
 import { GENRE_FILTERS } from '@/lib/constants';
-import { collections, collectionTypes } from '@/data';
+
 import { useMemories } from '@/app/providers';
-import { HeroBanner, MediaRow, FeaturedGrid } from '@/components/media';
+import { HeroBanner, MediaRow,} from '@/components/media';
 import { CategoryChip } from '@/components/ui';
 
 export function CollectionPage() {
@@ -12,19 +12,7 @@ export function CollectionPage() {
   const { getMemory, recentMemories, openMemory } = useMemories();
   const hero = getMemory('m-european-summer') ?? recentMemories[0];
 
-  const highlights = collections
-    .filter((c) => (filter ? c.category === filter : true))
-    .map((c) => ({
-      memoryId: c.id,
-      title: c.title,
-      description: c.description,
-      mediaUrl: c.coverUrl,
-      type: 'collection' as const,
-      category: c.category,
-      date: `${c.year ?? '2024'}-01-01`,
-      hearts: 5,
-      featured: c.id === 'c-italy',
-    }));
+  
 
   return (
     <>
@@ -58,27 +46,7 @@ export function CollectionPage() {
         <section className="container-edge">
           <h2 className="mb-4 text-title-md text-on-surface">Collections by Type</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {collectionTypes.map((type) => (
-              <button
-                key={type.category}
-                type="button"
-                className="group relative h-40 overflow-hidden rounded-card bg-surface text-left"
-              >
-                <img
-                  src={type.coverUrl}
-                  alt=""
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <span className="absolute inset-0 bg-gradient-to-t from-black/85 to-black/20" />
-                <span className="absolute inset-x-0 bottom-0 p-4">
-                  <span className="block text-title-md text-on-surface">{type.category}</span>
-                  <span className="text-label-sm text-metadata">
-                    {type.albumCount} albums · {type.itemCount} items
-                  </span>
-                </span>
-              </button>
-            ))}
+           
           </div>
         </section>
 
@@ -89,7 +57,7 @@ export function CollectionPage() {
           onSelect={openMemory}
         />
 
-        <FeaturedGrid title="Archive Highlights" memories={highlights} onSelect={openMemory} />
+       
       </div>
     </>
   );

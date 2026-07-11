@@ -3,7 +3,7 @@ import { Heart, MapPin, User } from 'lucide-react';
 import type { Memory } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui';
-
+import { getMemoryPreview } from '@/lib/getMemoryPreview';
 interface FeaturedGridProps {
   title?: string;
   memories: Memory[];
@@ -37,7 +37,7 @@ export function FeaturedGrid({ title, memories, onSelect }: FeaturedGridProps) {
               aria-label={memory.title}
             >
               <img
-                src={memory.mediaUrl}
+                src={getMemoryPreview(memory)}
                 alt={memory.title}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

@@ -19,9 +19,11 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
       .then((data) => {
         const mapped: Memory[] = data.map((m) => ({
           memoryId: m.memoryId,
+          profileId: m.profileId,
           title: m.title,
           description: m.description,
           mediaUrl: m.mediaUrl,
+          coverPhoto: m.coverPhoto,
           type: m.type,
           category: m.category,
           mood: m.mood,
@@ -92,6 +94,7 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
     title: string;
     description: string;
     mediaUrl: string;
+    coverPhoto?: string;
     type: Memory['type'];
     category: Memory['category'];
     mood?: Memory['mood'];
@@ -109,9 +112,11 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
 
     const memory: Memory = {
       memoryId: created.memoryId,
+      profileId: activeProfile.profileId,
       title: created.title,
       description: created.description,
       mediaUrl: created.mediaUrl,
+      coverPhoto: created.coverPhoto,
       type: created.type,
       category: created.category,
       mood: created.mood,
@@ -130,17 +135,52 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
     return memory;
   }, [activeProfile]);
 
-  const updateMemory = useCallback(async (id: string, patch: Partial<Memory>) => {
-    await apiFetch(`/memories/${id}`, { method: 'PUT', body: patch });
-    setMemories((prev) => prev.map((m) => (m.memoryId === id ? { ...m, ...patch } : m)));
-    setActiveMemory((prev) => (prev && prev.memoryId === id ? { ...prev, ...patch } : prev));
-  }, []);
+ const updateMemory = useCallback(
+  async (id: string, patch: Partial<Memory>) => {
+    if (!activeProfile) return;
 
-  const deleteMemory = useCallback(async (id: string) => {
-    await apiFetch(`/memories/${id}`, { method: 'DELETE' });
-    setMemories((prev) => prev.filter((m) => m.memoryId !== id));
-    setActiveMemory((prev) => (prev && prev.memoryId === id ? null : prev));
-  }, []);
+    await apiFetch(`/memories/${id}`, {
+      method: 'PUT',
+      body: {
+        ...patch,
+        profileId: activeProfile.profileId,
+      },
+    });
+
+    setMemories((prev) =>
+      prev.map((m) =>
+        m.memoryId === id ? { ...m, ...patch } : m
+      )
+    );
+
+    setActiveMemory((prev) =>
+      prev && prev.memoryId === id
+        ? { ...prev, ...patch }
+        : prev
+    );
+  },
+  [activeProfile],
+);
+
+  const deleteMemory = useCallback(
+  async (id: string) => {
+    await apiFetch(`/memories/${id}`, {
+      method: 'DELETE',
+      body: {
+        profileId: activeProfile?.profileId,
+      },
+    });
+
+    setMemories((prev) =>
+      prev.filter((m) => m.memoryId !== id),
+    );
+
+    setActiveMemory((prev) =>
+      prev?.memoryId === id ? null : prev,
+    );
+  },
+  [activeProfile],
+);
 
   const openMemory = useCallback((memory: Memory) => setActiveMemory(memory), []);
   const closeMemory = useCallback(() => setActiveMemory(null), []);

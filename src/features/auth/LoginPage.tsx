@@ -97,9 +97,13 @@ export function LoginPage() {
             />
             Remember me
           </label>
-          <a href="#" className="transition-colors hover:text-on-surface">
-            Forgot Password?
-          </a>
+         <button
+          type="button"
+          onClick={() => navigate('/forgot-password')}
+          className="text-sm text-primary transition hover:underline"
+        >
+          Forgot Password?
+        </button>
         </div>
       </form>
 

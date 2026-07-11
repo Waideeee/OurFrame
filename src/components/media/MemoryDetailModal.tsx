@@ -18,9 +18,10 @@ import {
 import type { MediaItem, Memory } from '@/types';
 import { useMemories } from '@/app/providers/memory-context';
 import { useProfile } from '@/app/providers/profile-context';
-import { cn, detectMediaType, formatDate, formatDuration } from '@/lib/utils';
+import { cn, formatDate, formatDuration } from '@/lib/utils';
 import { Badge, Button } from '@/components/ui';
 import { CircleAction } from '@/components/ui/CircleAction';
+import { getMemoryPreview } from '@/lib/getMemoryPreview';
 
 /** A circular, outlined Netflix-style action button. */
 
@@ -113,6 +114,8 @@ export function MemoryDetailModal() {
   // Edit/delete only apply to real, stored memories (not synthetic collection tiles).
   const isStored = !!(activeMemory && getMemory(activeMemory.memoryId));
 
+  
+
   const openFull = (target: MediaItem | 'main') => setFullView(target);
 
   const handleEdit = () => {
@@ -130,12 +133,16 @@ export function MemoryDetailModal() {
     closeMemory();
   };
 
+  
   const handleExitComplete = () => {
     if (pendingDeleteId) {
       deleteMemory(pendingDeleteId).catch((err) => console.error('Failed to delete memory:', err));
       setPendingDeleteId(null);
     }
   };
+
+  const isOwner =
+  activeProfile?.profileId === memory?.profileId;
 
   return (
     <AnimatePresence onExitComplete={handleExitComplete}>
@@ -173,7 +180,7 @@ export function MemoryDetailModal() {
             {/* Top media */}
             <div className="relative aspect-video w-full overflow-hidden bg-surface">
               <img
-                src={memory.mediaUrl}
+                src={getMemoryPreview(memory)}
                 alt={memory.title}
                 className="h-full w-full object-cover"
               />
@@ -256,6 +263,7 @@ export function MemoryDetailModal() {
 
                 {/* Manage actions — archive toggle plus edit/delete for stored memories. */}
                 <div className="mt-5 flex flex-wrap items-center gap-2">
+                  {isOwner && (
                   <Button
                     variant={memory.archived ? 'secondary' : 'icon'}
                     size="md"
@@ -268,9 +276,9 @@ export function MemoryDetailModal() {
                     )}
                   >
                     {memory.archived ? 'Remove from Archive' : 'Add to Archive'}
-                  </Button>
+                  </Button>)}
 
-                  {isStored ? (
+                  {isStored && isOwner ? (
                     confirmingDelete ? (
                       <span className="flex items-center gap-2 rounded-card bg-surface-high px-3 py-1.5">
                         <span className="text-label-sm text-metadata">Delete this memory?</span>
@@ -368,10 +376,13 @@ export function MemoryDetailModal() {
                 </button>
                 {(() => {
                   const item = fullView === 'main' ? null : fullView;
-                  const url = item ? item.url : memory.mediaUrl;
+                  const url = item
+                    ? item.url
+                    : memory.mediaUrl;
+
                   const playable = item
                     ? item.type === 'video'
-                    : isVideo && detectMediaType(memory.mediaUrl) === 'video';
+                    : memory.type === 'video';
                   return playable ? (
                     <video
                       src={url}

@@ -1,12 +1,22 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthLayout } from '@/components/layout';
-import { EmailVerification } from '@/components/common/EmailVerification';
+import { VerificationCode } from '@/components/common/VerificationCode';
 import { apiFetch } from '@/lib/api';
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
-  const { state } = useLocation();
-  const email = (state as { email?: string })?.email ?? '';
+  
+ const location = useLocation() as {
+  state: { email?: string };
+};
+
+const email = location.state?.email ?? '';
+  useEffect(() => {
+  if (!email) {
+    navigate('/login', { replace: true });
+  }
+}, [email, navigate]);
 
   const handleVerify = async (pin: string) => {
     await apiFetch('/auth/verify-email', {
@@ -24,13 +34,16 @@ export function VerifyEmailPage() {
 
   return (
     <AuthLayout>
-      <EmailVerification
+      <VerificationCode
+        title="Verify Your Email"
+        description="We sent a 4-digit verification code to"
         email={email}
         onVerify={handleVerify}
         onResend={handleResend}
-        onVerified={() => navigate('/profiles')}
-        onCancel={() => navigate('/signup')}
-      />
+        successTitle="Email Verified!"
+        successDescription="Your email has been successfully confirmed."
+        onContinue={() => navigate('/profiles')}
+    />
     </AuthLayout>
   );
 }
